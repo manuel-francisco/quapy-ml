@@ -12,8 +12,8 @@ from os.path import join
 qp.environ['SAMPLE_SIZE'] = settings.SAMPLE_SIZE
 plotext='png'
 
-resultdir = './results'
-plotdir = './plots'
+resultdir = './results_npp'
+plotdir = './plots_npp'
 os.makedirs(plotdir, exist_ok=True)
 
 def gather_results(methods, error_name):

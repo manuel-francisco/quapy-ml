@@ -1,8 +1,8 @@
 from sklearn.linear_model import LogisticRegression
 import quapy as qp
-from classification.methods import PCALR
-from method.meta import QuaNet
-from method.non_aggregative import MaximumLikelihoodPrevalenceEstimation
+from quapy.classification.methods import PCALR
+from quapy.method.meta import QuaNet
+from quapy.method.non_aggregative import MaximumLikelihoodPrevalenceEstimation
 from quapy.method.aggregative import CC, ACC, PCC, PACC, EMQ, OneVsAll, SVMQ, SVMKLD, SVMNKLD, SVMAE, SVMRAE, HDy
 from quapy.method.meta import EPACC, EEMQ
 import quapy.functional as F
@@ -19,12 +19,16 @@ import shutil
 
 qp.environ['SAMPLE_SIZE'] = settings.SAMPLE_SIZE
 
+
+__C_range = np.logspace(-4, 5, 10)
+
+lr_params = {'C': __C_range, 'class_weight': [None, 'balanced']}
+svmperf_params = {'C': __C_range}
+
+
 def newLR():
     return LogisticRegression(max_iter=1000, solver='lbfgs', n_jobs=-1)
 
-__C_range = np.logspace(-4, 5, 10)
-lr_params = {'C': __C_range, 'class_weight': [None, 'balanced']}
-svmperf_params = {'C': __C_range}
 
 def quantification_models():
     # methods tested in Gao & Sebastiani 2016
@@ -33,9 +37,9 @@ def quantification_models():
     yield 'pcc', PCC(newLR()), lr_params
     yield 'pacc', PACC(newLR()), lr_params
     yield 'sld', EMQ(newLR()), lr_params
-    # yield 'svmq', OneVsAll(SVMQ(args.svmperfpath)), svmperf_params
-    # yield 'svmkld', OneVsAll(SVMKLD(args.svmperfpath)), svmperf_params
-    # yield 'svmnkld', OneVsAll(SVMNKLD(args.svmperfpath)), svmperf_params
+    yield 'svmq', OneVsAll(SVMQ(args.svmperfpath)), svmperf_params
+    yield 'svmkld', OneVsAll(SVMKLD(args.svmperfpath)), svmperf_params
+    yield 'svmnkld', OneVsAll(SVMNKLD(args.svmperfpath)), svmperf_params
 
     # methods added
     # yield 'svmmae', OneVsAll(SVMAE(args.svmperfpath)), svmperf_params
@@ -53,11 +57,10 @@ def quantification_cuda_models():
 def quantification_ensembles():
     param_mod_sel = {
         'sample_size': settings.SAMPLE_SIZE,
-        'n_prevpoints': 21,
-        'n_repetitions': 5,
+        'n_repetitions': 1000,
         'verbose': False
     }
-    common={
+    common = {
         'max_sample_size': 1000,
         'n_jobs': settings.ENSEMBLE_N_JOBS,
         'param_grid': lr_params,
@@ -137,8 +140,8 @@ def run(experiment):
             model,
             param_grid=hyperparams,
             sample_size=settings.SAMPLE_SIZE,
-            n_prevpoints=21,
-            n_repetitions=5,
+            protocol='npp',
+            n_repetitions=1000,
             error=optim_loss,
             refit=False,
             timeout=60*60,
@@ -159,12 +162,11 @@ def run(experiment):
             # fits the model only the first time
             model.fit(benchmark_eval.training)
 
-        true_prevalences, estim_prevalences = qp.evaluation.artificial_sampling_prediction(
+        true_prevalences, estim_prevalences = qp.evaluation.natural_prevalence_prediction(
             model,
             test=benchmark_eval.test,
             sample_size=settings.SAMPLE_SIZE,
-            n_prevpoints=21,
-            n_repetitions=25,
+            n_repetitions=5000,
             n_jobs=-1 if isinstance(model, qp.method.meta.Ensemble) else 1
         )
         test_estim_prevalence = model.quantify(benchmark_eval.test.instances)
@@ -182,7 +184,7 @@ def run(experiment):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Run experiments for Tweeter Sentiment Quantification')
+    parser = argparse.ArgumentParser(description='Run experiments for Tweeter Sentiment Quantification using NPP')
     parser.add_argument('results', metavar='RESULT_PATH', type=str,
                         help='path to the directory where to store the results')
     parser.add_argument('--svmperfpath', metavar='SVMPERF_PATH', type=str, default='./svm_perf_quantification',
@@ -197,17 +199,14 @@ if __name__ == '__main__':
     optim_losses = ['mae', 'mrae']
     datasets = qp.datasets.TWITTER_SENTIMENT_DATASETS_TRAIN
 
-    models = quantification_models()
-    qp.util.parallel(run, itertools.product(optim_losses, datasets, models), n_jobs=settings.N_JOBS)
+    # models = quantification_models()
+    # qp.util.parallel(run, itertools.product(optim_losses, datasets, models), n_jobs=settings.N_JOBS)
 
     models = quantification_cuda_models()
     qp.util.parallel(run, itertools.product(optim_losses, datasets, models), n_jobs=settings.CUDA_N_JOBS)
 
-    models = quantification_ensembles()
-    qp.util.parallel(run, itertools.product(optim_losses, datasets, models), n_jobs=1)
-    # Parallel(n_jobs=1)(
-    #     delayed(run)(experiment) for experiment in itertools.product(optim_losses, datasets, models)
-    # )
+    # models = quantification_ensembles()
+    # qp.util.parallel(run, itertools.product(optim_losses, datasets, models), n_jobs=1)
 
     #shutil.rmtree(args.checkpointdir, ignore_errors=True)
 

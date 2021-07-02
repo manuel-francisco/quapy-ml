@@ -6,10 +6,10 @@ import pickle
 import argparse
 from TweetSentQuant.util import nicename, get_ranks_from_Gao_Sebastiani
 import settings
-from experiments import result_path
+from experiments_NPP import result_path
 from tabular import Table
 
-tables_path = './tables'
+tables_path = './tables_npp'
 MAXTONE = 50  # sets the intensity of the maximum color reached by the worst (red) and best (green) results
 
 makedirs(tables_path, exist_ok=True)
@@ -85,7 +85,7 @@ if __name__ == '__main__':
             }
         """
 
-        save_table(f'./tables/tab_results_{eval_name}.new.tex', tabular)
+        save_table(f'{tables_path}/tab_results_{eval_name}.npp.tex', tabular)
 
         # Tables ranks for AE and RAE (two tables)
         # ----------------------------------------------------
@@ -140,6 +140,6 @@ if __name__ == '__main__':
         }
         """
 
-        save_table(f'./tables/tab_rank_{eval_name}.new.tex', tabular)
+        save_table(f'{tables_path}/tab_rank_{eval_name}.npp.tex', tabular)
 
     print("[Done]")
