@@ -227,7 +227,7 @@ def _delayed_new_instance(args):
     if val_split is not None:
         if isinstance(val_split, float):
             assert 0 < val_split < 1, 'val_split should be in (0,1)'
-            data, val_split = data.split_stratified(train_prop=1 - val_split)
+            data, val_split = data.train_test_split(train_prop=1 - val_split)
 
     sample_index = data.sampling_index(sample_size, *prev)
     sample = data.sampling_from_index(sample_index)
