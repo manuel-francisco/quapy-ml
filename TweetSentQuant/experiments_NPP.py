@@ -42,8 +42,8 @@ def quantification_models():
     yield 'svmnkld', OneVsAll(SVMNKLD(args.svmperfpath)), svmperf_params
 
     # methods added
-    # yield 'svmmae', OneVsAll(SVMAE(args.svmperfpath)), svmperf_params
-    # yield 'svmmrae', OneVsAll(SVMRAE(args.svmperfpath)), svmperf_params
+    yield 'svmmae', OneVsAll(SVMAE(args.svmperfpath)), svmperf_params
+    yield 'svmmrae', OneVsAll(SVMRAE(args.svmperfpath)), svmperf_params
     yield 'hdy', OneVsAll(HDy(newLR())), lr_params
 
 
@@ -199,14 +199,14 @@ if __name__ == '__main__':
     optim_losses = ['mae', 'mrae']
     datasets = qp.datasets.TWITTER_SENTIMENT_DATASETS_TRAIN
 
-    # models = quantification_models()
-    # qp.util.parallel(run, itertools.product(optim_losses, datasets, models), n_jobs=settings.N_JOBS)
+    models = quantification_models()
+    qp.util.parallel(run, itertools.product(optim_losses, datasets, models), n_jobs=settings.N_JOBS)
 
     models = quantification_cuda_models()
     qp.util.parallel(run, itertools.product(optim_losses, datasets, models), n_jobs=settings.CUDA_N_JOBS)
 
-    # models = quantification_ensembles()
-    # qp.util.parallel(run, itertools.product(optim_losses, datasets, models), n_jobs=1)
+    models = quantification_ensembles()
+    qp.util.parallel(run, itertools.product(optim_losses, datasets, models), n_jobs=1)
 
     #shutil.rmtree(args.checkpointdir, ignore_errors=True)
 
