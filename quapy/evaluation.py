@@ -105,7 +105,7 @@ def _predict_from_indexes(
         estim_prevalence = quantification_func(sample.instances)
         return true_prevalence, estim_prevalence
 
-    pbar = tqdm(indexes, desc='[artificial sampling protocol] generating predictions') if verbose else indexes
+    pbar = tqdm(indexes, desc='[sampling protocol] generating predictions') if verbose else indexes
     results = qp.util.parallel(_predict_prevalences, pbar, n_jobs=n_jobs)
 
     true_prevalences, estim_prevalences = zip(*results)

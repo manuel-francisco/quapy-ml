@@ -3,6 +3,13 @@ from scipy.sparse import dok_matrix
 from tqdm import tqdm
 
 
+def from_rcv2_lang_file(path, encoding='utf-8'):
+    lines = open(path, 'rt', encoding=encoding).readlines()
+    parts = [l.split('\t') for l in lines]
+    docs, cats = list(zip(*[(parts_i[1], parts_i[2]) for parts_i in parts]))
+    return docs, cats
+
+
 def from_text(path, encoding='utf-8'):
     """
     Reas a labelled colletion of documents.

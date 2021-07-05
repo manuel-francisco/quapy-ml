@@ -73,7 +73,7 @@ class QuaNetTrainer(BaseQuantifier):
 
         if fit_learner:
             classifier_data, unused_data = data.split_stratified(0.4)
-            train_data, valid_data = unused_data.split_stratified(0.66)  # 0.66 split of 60% makes 40% and 20%
+            train_data, valid_data = unused_data.train_test_split(0.66)  # 0.66 split of 60% makes 40% and 20%
             self.learner.fit(*classifier_data.Xy)
         else:
             classifier_data = None

@@ -97,7 +97,7 @@ class GridSearchQ(BaseQuantifier):
             return training, validation
         elif isinstance(validation, float):
             assert 0. < validation < 1., 'validation proportion should be in (0,1)'
-            training, validation = training.split_stratified(train_prop=1 - validation)
+            training, validation = training.train_test_split(train_prop=1 - validation)
             return training, validation
         else:
             raise ValueError(f'"validation" must either be a LabelledCollection or a float in (0,1) indicating the'
