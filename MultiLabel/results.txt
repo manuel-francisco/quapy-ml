@@ -1,0 +1,79 @@
+num categories = 10
+Train-counts: [1650  181  389 2877  433  347  538  197  369  212]
+Test-counts: [ 719   56  189 1087  149  131  179   89  117   71]
+MLPE: 0.01101
+
+NPP:
+NaiveCC   	mae=0.01718
+NaivePCC  	mae=0.00898
+NaiveACC  	mae=0.01560
+NaivePACC 	mae=0.01062
+
+StackCC   	mae=0.00790
+StackPCC  	mae=0.00659 **
+StackACC  	mae=0.00913
+StackPACC 	mae=0.00771
+
+ChainCC   	mae=0.01644
+ChainPCC  	mae=0.00924
+ChainACC  	mae=0.01767
+ChainPACC 	mae=0.01140
+
+MRQ-CC    	mae=0.01130
+MRQ-PCC   	mae=0.00941
+MRQ-ACC   	mae=0.01153
+MRQ-PACC  	mae=0.01000
+
+MRQ-StackCC	mae=0.00757
+MRQ-StackPCC	mae=0.00652 **
+MRQ-StackACC	mae=0.00799
+MRQ-StackPACC	mae=0.00763
+
+MRQ-StackCC-app	mae=0.00791
+MRQ-StackPCC-appmae=0.00840
+MRQ-StackACC-appmae=0.00910
+MRQ-StackPACC-apmae=0.00941
+
+MRQ-ChainCC	mae=0.00989
+MRQ-ChainPCC	mae=0.00916
+MRQ-ChainACC	mae=0.01251
+MRQ-ChainPACC	mae=0.00954
+
+APP:
+NaiveCC   	mae=0.04120
+NaivePCC  	mae=0.03741
+NaiveACC  	mae=0.03202
+NaivePACC 	mae=0.02293
+
+StackCC   	mae=0.01969
+StackPCC  	mae=0.01871
+StackACC  	mae=0.01386 **
+StackPACC 	mae=0.01267 **
+
+ChainCC   	mae=0.04136
+ChainPCC  	mae=0.03571
+ChainACC  	mae=0.03622
+ChainPACC 	mae=0.02659
+
+MRQ-CC    	mae=0.04356
+MRQ-PCC   	mae=0.02532
+MRQ-ACC   	mae=0.05716
+MRQ-PACC  	mae=0.02936
+
+MRQ-StackCC	mae=0.02448
+MRQ-StackPCC	mae=0.02090
+MRQ-StackACC	mae=0.02579
+MRQ-StackPACC	mae=0.02388
+
+MRQ-StackCC-app	mae=0.01535
+MRQ-StackPCC-appmae=0.01457
+MRQ-StackACC-appmae=0.01441
+MRQ-StackPACC-apmae=0.01633
+
+MRQ-ChainCC	mae=0.04874
+MRQ-ChainPCC	mae=0.02537
+MRQ-ChainACC	mae=0.06262
+MRQ-ChainPACC	mae=0.02906
+
+
+

@@ -154,15 +154,24 @@ class MultilabelNaiveAggregativeQuantifier(MultilabelNaiveQuantifier, MLAggregat
         return self.aggregate(predictions)
 
 
-class MultilabelRegressionQuantification:
-    def __init__(self, base_quantifier=CC(LinearSVC()), regression='ridge', n_samples=500, sample_size=500, norm=True,
-                 means=True, stds=True):
+class MLRegressionQuantification:
+    def __init__(self,
+                 mlquantifier=MultilabelNaiveQuantifier(CC(LinearSVC())),
+                 regression='ridge',
+                 protocol='npp',
+                 n_samples=500,
+                 sample_size=500,
+                 norm=True,
+                 means=True,
+                 stds=True):
         assert regression in ['ridge', 'svr'], 'unknown regression model'
-        self.estimator = MultilabelNaiveQuantifier(base_quantifier)
+        assert protocol in ['npp', 'app'], 'unknown protocol'
+        self.estimator = mlquantifier
         if regression == 'ridge':
             self.reg = Ridge(normalize=norm)
         elif regression == 'svr':
             self.reg = MultiOutputRegressor(LinearSVR())
+        self.protocol = protocol
         # self.reg = MultiTaskLassoCV(normalize=norm)
         # self.reg = KernelRidge(kernel='rbf')
         # self.reg = LassoLarsCV(normalize=norm)
@@ -174,25 +183,11 @@ class MultilabelRegressionQuantification:
         self.regression = regression
         self.n_samples = n_samples
         self.sample_size = sample_size
-        self.norm = StandardScaler()
+        # self.norm = StandardScaler()
         self.means = means
         self.stds = stds
 
-    def fit(self, data:MultilabelledCollection):
-        self.classes_ = data.classes_
-        tr, te = data.train_test_split()
-        self.estimator.fit(tr)
-        samples_mean = []
-        samples_std = []
-        Xs = []
-        ys = []
-        for sample in te.natural_sampling_generator(sample_size=self.sample_size, repeats=self.n_samples):
-            ys.append(sample.prevalence()[:,1])
-            Xs.append(self.estimator.quantify(sample.instances)[:,1])
-            if self.means:
-                samples_mean.append(sample.instances.mean(axis=0).getA().flatten())
-            if self.stds:
-                samples_std.append(sample.instances.todense().std(axis=0).getA().flatten())
+    def _prepare_arrays(self, Xs, ys, samples_mean, samples_std):
         Xs = np.asarray(Xs)
         ys = np.asarray(ys)
         if self.means:
@@ -201,7 +196,49 @@ class MultilabelRegressionQuantification:
         if self.stds:
             samples_std = np.asarray(samples_std)
             Xs = np.hstack([Xs, samples_std])
-        Xs = self.norm.fit_transform(Xs)
+        return Xs, ys
+
+    def generate_samples_npp(self, val):
+        samples_mean = []
+        samples_std = []
+        Xs = []
+        ys = []
+        for sample in val.natural_sampling_generator(sample_size=self.sample_size, repeats=self.n_samples):
+            ys.append(sample.prevalence()[:, 1])
+            Xs.append(self.estimator.quantify(sample.instances)[:, 1])
+            if self.means:
+                samples_mean.append(sample.instances.mean(axis=0).getA().flatten())
+            if self.stds:
+                samples_std.append(sample.instances.todense().std(axis=0).getA().flatten())
+        return self._prepare_arrays(Xs, ys, samples_mean, samples_std)
+
+    def generate_samples_app(self, val):
+        samples_mean = []
+        samples_std = []
+        Xs = []
+        ys = []
+        ncats = len(self.classes_)
+        nprevs  = 21
+        repeats = max(self.n_samples // (ncats * nprevs), 1)
+        for cat in self.classes_:
+            for sample in val.artificial_sampling_generator(sample_size=self.sample_size, category=cat, n_prevalences=nprevs, repeats=repeats):
+                ys.append(sample.prevalence()[:, 1])
+                Xs.append(self.estimator.quantify(sample.instances)[:, 1])
+                if self.means:
+                    samples_mean.append(sample.instances.mean(axis=0).getA().flatten())
+                if self.stds:
+                    samples_std.append(sample.instances.todense().std(axis=0).getA().flatten())
+        return self._prepare_arrays(Xs, ys, samples_mean, samples_std)
+
+    def fit(self, data:MultilabelledCollection):
+        self.classes_ = data.classes_
+        tr, val = data.train_test_split()
+        self.estimator.fit(tr)
+        if self.protocol == 'npp':
+            Xs, ys = self.generate_samples_npp(val)
+        elif self.protocol == 'app':
+            Xs, ys = self.generate_samples_app(val)
+        # Xs = self.norm.fit_transform(Xs)
         self.reg.fit(Xs, ys)
         return self
 
@@ -213,9 +250,9 @@ class MultilabelRegressionQuantification:
         if self.stds:
             sample_std = instances.todense().std(axis=0).getA()
             Xs = np.hstack([Xs, sample_std])
-        Xs = self.norm.transform(Xs)
+        # Xs = self.norm.transform(Xs)
         Xs = self.reg.predict(Xs)
-        Xs = self.norm.inverse_transform(Xs)
+        # Xs = self.norm.inverse_transform(Xs)
         adjusted = np.clip(Xs, 0, 1)
         adjusted = adjusted.flatten()
         neg_prevs = 1-adjusted

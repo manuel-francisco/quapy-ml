@@ -6,7 +6,7 @@ from tqdm import tqdm
 import quapy as qp
 from MultiLabel.mlclassification import MultilabelStackedClassifier
 from MultiLabel.mldata import MultilabelledCollection
-from MultiLabel.mlquantification import MultilabelNaiveQuantifier, MLCC, MLPCC, MultilabelRegressionQuantification, \
+from MultiLabel.mlquantification import MultilabelNaiveQuantifier, MLCC, MLPCC, MLRegressionQuantification, \
     MLACC, \
     MLPACC, MultilabelNaiveAggregativeQuantifier
 from method.aggregative import PACC, CC, EMQ, PCC, ACC, HDy
@@ -44,11 +44,23 @@ def models():
     # yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None, order='random'))
     # yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None, order='random'))
     # yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None, order='random'))
-    common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False}
-    yield 'MRQ-CC', MultilabelRegressionQuantification(base_quantifier=CC(cls()), regression='svr', **common)
-    yield 'MRQ-PCC', MultilabelRegressionQuantification(base_quantifier=PCC(cls()), regression='svr', **common)
-    yield 'MRQ-ACC', MultilabelRegressionQuantification(base_quantifier=ACC(cls()), regression='svr', **common)
-    yield 'MRQ-PACC', MultilabelRegressionQuantification(base_quantifier=PACC(cls()), regression='svr', **common)
+    common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
+    # yield 'MRQ-CC', MLRegressionQuantification(MultilabelNaiveQuantifier(CC(cls())), **common)
+    # yield 'MRQ-PCC', MLRegressionQuantification(MultilabelNaiveQuantifier(PCC(cls())),  **common)
+    # yield 'MRQ-ACC', MLRegressionQuantification(MultilabelNaiveQuantifier(ACC(cls())),  **common)
+    # yield 'MRQ-PACC', MLRegressionQuantification(MultilabelNaiveQuantifier(PACC(cls())), **common)
+    # yield 'MRQ-StackCC', MLRegressionQuantification(MLCC(MultilabelStackedClassifier(cls())), **common)
+    # yield 'MRQ-StackPCC', MLRegressionQuantification(MLPCC(MultilabelStackedClassifier(cls())), **common)
+    # yield 'MRQ-StackACC', MLRegressionQuantification(MLACC(MultilabelStackedClassifier(cls())), **common)
+    # yield 'MRQ-StackPACC', MLRegressionQuantification(MLPACC(MultilabelStackedClassifier(cls())),  **common)
+    yield 'MRQ-StackCC-app', MLRegressionQuantification(MLCC(MultilabelStackedClassifier(cls())), protocol='app', **common)
+    yield 'MRQ-StackPCC-app', MLRegressionQuantification(MLPCC(MultilabelStackedClassifier(cls())), protocol='app', **common)
+    yield 'MRQ-StackACC-app', MLRegressionQuantification(MLACC(MultilabelStackedClassifier(cls())), protocol='app', **common)
+    yield 'MRQ-StackPACC-app', MLRegressionQuantification(MLPACC(MultilabelStackedClassifier(cls())), protocol='app',  **common)
+    # yield 'MRQ-ChainCC', MLRegressionQuantification(MLCC(ClassifierChain(cls())), **common)
+    # yield 'MRQ-ChainPCC', MLRegressionQuantification(MLPCC(ClassifierChain(cls())), **common)
+    # yield 'MRQ-ChainACC', MLRegressionQuantification(MLACC(ClassifierChain(cls())), **common)
+    # yield 'MRQ-ChainPACC', MLRegressionQuantification(MLPACC(ClassifierChain(cls())), **common)
 
 
 dataset = 'reuters21578'

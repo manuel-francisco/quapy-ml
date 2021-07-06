@@ -1,0 +1,14 @@
+Things to test:
+- MultiChain for classification, MultiChain for regression?
+
+- Independent classifiers + independent quantifiers
+- Stacking + independent quantifiers
+- ClassifierChain + independent quantifiers
+- Independent quantifiers + cross-class regression (independent?)
+- Stacking + cross-class regression
+- ClassifierChain + cross-class regression
+- Covariates (Means, CovMatrix from samples) + multioutput regression?
+- Covariates concatented with quantifiers predictions + cross-class regression?
+
+- Model Selection for specific protocols?
+
