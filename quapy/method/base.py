@@ -27,7 +27,7 @@ class BaseQuantifier(metaclass=ABCMeta):
     # based on class structure
     @property
     def binary(self):
-        return False
+        return len(self.classes_)==2
 
     @property
     def aggregative(self):

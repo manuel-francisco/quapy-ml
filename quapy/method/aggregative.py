@@ -37,6 +37,9 @@ class AggregativeQuantifier(BaseQuantifier):
     def learner(self, value):
         self.learner_ = value
 
+    def preclassify(self, instances):
+        return self.classify(instances)
+
     def classify(self, instances):
         return self.learner.predict(instances)
 
@@ -73,6 +76,9 @@ class AggregativeProbabilisticQuantifier(AggregativeQuantifier):
     Quantifiers by implementing a _posterior_probabilities_ method returning values in [0,1] -- the posterior
     probabilities.
     """
+
+    def preclassify(self, instances):
+        return self.predict_proba(instances)
 
     def posterior_probabilities(self, instances):
         return self.learner.predict_proba(instances)
@@ -316,6 +322,12 @@ class PACC(AggregativeProbabilisticQuantifier):
 
         self.pcc = PCC(self.learner)
 
+        self.Pte_cond_estim_ = self.getPteCondEstim(classes, y, y_)
+
+        return self
+
+    @classmethod
+    def getPteCondEstim(cls, classes, y, y_):
         # estimate the matrix with entry (i,j) being the estimate of P(yi|yj), that is, the probability that a
         # document that belongs to yj ends up being classified as belonging to yi
         n_classes = len(classes)
@@ -323,9 +335,7 @@ class PACC(AggregativeProbabilisticQuantifier):
         for i, class_ in enumerate(classes):
             confusion[i] = y_[y == class_].mean(axis=0)
 
-        self.Pte_cond_estim_ = confusion.T
-
-        return self
+        return confusion.T
 
     def aggregate(self, classif_posteriors):
         prevs_estim = self.pcc.aggregate(classif_posteriors)
@@ -785,7 +795,7 @@ class OneVsAll(AggregativeQuantifier):
         return self.binary_quantifier.get_params()
 
     def _delayed_binary_classification(self, c, X):
-        return self.dict_binary_quantifiers[c].classify(X)
+        return self.dict_binary_quantifiers[c].preclassify(X)
 
     def _delayed_binary_posteriors(self, c, X):
         return self.dict_binary_quantifiers[c].posterior_probabilities(X)

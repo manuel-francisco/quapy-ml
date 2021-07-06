@@ -2,11 +2,11 @@ import os,sys
 from sklearn.datasets import get_data_home, fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import MultiLabelBinarizer
-from jrcacquis_reader import fetch_jrcacquis, JRCAcquis_Document
-from ohsumed_reader import fetch_ohsumed50k
-from reuters21578_reader import fetch_reuters21578
-from rcv_reader import fetch_RCV1
-from wipo_reader import fetch_WIPOgamma, WipoGammaDocument
+from MultiLabel.data.jrcacquis_reader import fetch_jrcacquis
+from MultiLabel.data.ohsumed_reader import fetch_ohsumed50k
+from MultiLabel.data.reuters21578_reader import fetch_reuters21578
+from MultiLabel.data.rcv_reader import fetch_RCV1
+from MultiLabel.data.wipo_reader import fetch_WIPOgamma, WipoGammaDocument
 import pickle
 import numpy as np
 from tqdm import tqdm
