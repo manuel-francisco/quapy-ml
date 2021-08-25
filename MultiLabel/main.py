@@ -2,7 +2,8 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.multioutput import ClassifierChain
 from tqdm import tqdm
-
+from skmultilearn.dataset import load_dataset
+from scipy.sparse import csr_matrix
 import quapy as qp
 from MultiLabel.mlclassification import MultilabelStackedClassifier
 from MultiLabel.mldata import MultilabelledCollection
@@ -13,7 +14,7 @@ from method.aggregative import PACC, CC, EMQ, PCC, ACC, HDy
 import numpy as np
 from data.dataset  import Dataset
 from mlevaluation import ml_natural_prevalence_evaluation, ml_artificial_prevalence_evaluation
-
+import sys
 
 def cls():
     # return LinearSVC()
@@ -31,24 +32,24 @@ n_samples = 5000
 
 
 def models():
-    # yield 'NaiveCC', MultilabelNaiveAggregativeQuantifier(CC(cls()))
-    # yield 'NaivePCC', MultilabelNaiveAggregativeQuantifier(PCC(cls()))
-    # yield 'NaiveACC', MultilabelNaiveAggregativeQuantifier(ACC(cls()))
-    # yield 'NaivePACC', MultilabelNaiveAggregativeQuantifier(PACC(cls()))
+    yield 'NaiveCC', MultilabelNaiveAggregativeQuantifier(CC(cls()))
+    yield 'NaivePCC', MultilabelNaiveAggregativeQuantifier(PCC(cls()))
+    yield 'NaiveACC', MultilabelNaiveAggregativeQuantifier(ACC(cls()))
+    yield 'NaivePACC', MultilabelNaiveAggregativeQuantifier(PACC(cls()))
     # yield 'EMQ', MultilabelQuantifier(EMQ(calibratedCls()))
-    # yield 'StackCC', MLCC(MultilabelStackedClassifier(cls()))
-    # yield 'StackPCC', MLPCC(MultilabelStackedClassifier(cls()))
-    # yield 'StackACC', MLACC(MultilabelStackedClassifier(cls()))
-    # yield 'StackPACC', MLPACC(MultilabelStackedClassifier(cls()))
+    yield 'StackCC', MLCC(MultilabelStackedClassifier(cls()))
+    yield 'StackPCC', MLPCC(MultilabelStackedClassifier(cls()))
+    yield 'StackACC', MLACC(MultilabelStackedClassifier(cls()))
+    yield 'StackPACC', MLPACC(MultilabelStackedClassifier(cls()))
     # yield 'ChainCC', MLCC(ClassifierChain(cls(), cv=None, order='random'))
     # yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None, order='random'))
     # yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None, order='random'))
     # yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None, order='random'))
     common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
-    # yield 'MRQ-CC', MLRegressionQuantification(MultilabelNaiveQuantifier(CC(cls())), **common)
-    # yield 'MRQ-PCC', MLRegressionQuantification(MultilabelNaiveQuantifier(PCC(cls())),  **common)
-    # yield 'MRQ-ACC', MLRegressionQuantification(MultilabelNaiveQuantifier(ACC(cls())),  **common)
-    # yield 'MRQ-PACC', MLRegressionQuantification(MultilabelNaiveQuantifier(PACC(cls())), **common)
+    yield 'MRQ-CC', MLRegressionQuantification(MultilabelNaiveQuantifier(CC(cls())), **common)
+    yield 'MRQ-PCC', MLRegressionQuantification(MultilabelNaiveQuantifier(PCC(cls())),  **common)
+    yield 'MRQ-ACC', MLRegressionQuantification(MultilabelNaiveQuantifier(ACC(cls())),  **common)
+    yield 'MRQ-PACC', MLRegressionQuantification(MultilabelNaiveQuantifier(PACC(cls())), **common)
     # yield 'MRQ-StackCC', MLRegressionQuantification(MLCC(MultilabelStackedClassifier(cls())), **common)
     # yield 'MRQ-StackPCC', MLRegressionQuantification(MLPCC(MultilabelStackedClassifier(cls())), **common)
     # yield 'MRQ-StackACC', MLRegressionQuantification(MLACC(MultilabelStackedClassifier(cls())), **common)
@@ -63,19 +64,36 @@ def models():
     # yield 'MRQ-ChainPACC', MLRegressionQuantification(MLPACC(ClassifierChain(cls())), **common)
 
 
-dataset = 'reuters21578'
-picklepath = '/home/moreo/word-class-embeddings/pickles'
-data = Dataset.load(dataset, pickle_path=f'{picklepath}/{dataset}.pickle')
-
-Xtr, Xte = data.vectorize()
-ytr = data.devel_labelmatrix.todense().getA()
-yte = data.test_labelmatrix.todense().getA()
+# dataset = 'reuters21578'
+# picklepath = '/home/moreo/word-class-embeddings/pickles'
+# data = Dataset.load(dataset, pickle_path=f'{picklepath}/{dataset}.pickle')
+# Xtr, Xte = data.vectorize()
+# ytr = data.devel_labelmatrix.todense().getA()
+# yte = data.test_labelmatrix.todense().getA()
 
 # remove categories with < 10 training documents
-to_keep = np.logical_and(ytr.sum(axis=0)>=50, yte.sum(axis=0)>=50)
-ytr = ytr[:, to_keep]
-yte = yte[:, to_keep]
-print(f'num categories = {ytr.shape[1]}')
+# to_keep = np.logical_and(ytr.sum(axis=0)>=50, yte.sum(axis=0)>=50)
+# ytr = ytr[:, to_keep]
+# yte = yte[:, to_keep]
+# print(f'num categories = {ytr.shape[1]}')
+
+
+dataset = 'birds'
+
+Xtr, ytr, feature_names, label_names = load_dataset(dataset, 'train')
+Xte, yte, _, _ = load_dataset(dataset, 'test')
+print(f'n-labels = {len(label_names)}')
+
+Xtr = csr_matrix(Xtr)
+Xte = csr_matrix(Xte)
+
+ytr = ytr.todense().getA()
+yte = yte.todense().getA()
+
+
+# print((np.abs(np.corrcoef(ytr, rowvar=False))>0.1).sum())
+# sys.exit(0)
+
 
 train = MultilabelledCollection(Xtr, ytr)
 test = MultilabelledCollection(Xte, yte)
