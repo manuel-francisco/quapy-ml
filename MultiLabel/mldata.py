@@ -9,7 +9,7 @@ from quapy.functional import artificial_prevalence_sampling
 
 class MultilabelledCollection:
     def __init__(self, instances, labels):
-        assert labels.ndim==2, 'data does not seem to be multilabel'
+        assert labels.ndim==2, f'data does not seem to be multilabel {labels}'
         self.instances = instances
         self.labels = labels
         self.classes_ = np.arange(labels.shape[1])

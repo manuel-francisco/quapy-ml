@@ -186,6 +186,7 @@ class MLRegressionQuantification:
         # self.norm = StandardScaler()
         self.means = means
         self.stds = stds
+        # self.covs = covs
 
     def _prepare_arrays(self, Xs, ys, samples_mean, samples_std):
         Xs = np.asarray(Xs)
@@ -196,6 +197,8 @@ class MLRegressionQuantification:
         if self.stds:
             samples_std = np.asarray(samples_std)
             Xs = np.hstack([Xs, samples_std])
+        # if self.covs:
+
         return Xs, ys
 
     def generate_samples_npp(self, val):
@@ -257,3 +260,6 @@ class MLRegressionQuantification:
         adjusted = adjusted.flatten()
         neg_prevs = 1-adjusted
         return np.asarray([neg_prevs, adjusted]).T
+
+
+# class
