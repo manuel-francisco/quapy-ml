@@ -1,5 +1,22 @@
+Classifiers
+
+- Classifiers binary, single-label, OneVsRest or MultiOutput:
+    - LR
+    - LinearSVC (?)
+
+- Classifiers natively multi-label:
+    - from scikit-multilearn (x11)
+    -
+
+Protocols:
+    - NPP
+    - APP (for each class)
+
+
+
 Things to test:
-- MultiChain for classification, MultiChain for regression?
+- MultiChain for classification, MultiChain for regression...
+- Reimplement stacking with sklearn.ensemble.StackingClassifier? No parece facil.
 
 - Independent classifiers + independent quantifiers
 - Stacking + independent quantifiers
@@ -12,3 +29,10 @@ Things to test:
 
 - Model Selection for specific protocols?
 
+TODO:
+- decide methods
+    - decide classifiers binary
+    - decide classifiers multi-label
+    - decide quantifiers naive
+    - decide quantifiers multi-label
+- decide datasets

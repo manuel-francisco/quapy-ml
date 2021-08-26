@@ -64,6 +64,7 @@ class MultilabelledCollection:
         return MultilabelledCollection(documents, labels)
 
     def train_test_split(self, train_prop=0.6, random_state=None):
+        raise ValueError('use the scikit-multilearn implementation')
         tr_docs, te_docs, tr_labels, te_labels = \
             train_test_split(self.instances, self.labels, train_size=train_prop, random_state=random_state)
         return MultilabelledCollection(tr_docs, tr_labels), MultilabelledCollection(te_docs, te_labels)
