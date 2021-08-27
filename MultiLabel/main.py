@@ -23,7 +23,7 @@ import pickle
 
 def cls():
     # return LinearSVC()
-    return LogisticRegression(max_iter=1000, solver='lbfgs', n_jobs=-1)
+    return LogisticRegression(max_iter=1000, solver='lbfgs')
 
 
 def calibratedCls():
@@ -38,10 +38,10 @@ n_samples = 5000
 
 def models():
     yield 'NaiveCC', MultilabelNaiveAggregativeQuantifier(CC(cls()))
-    yield 'NaivePCC', MultilabelNaiveAggregativeQuantifier(PCC(cls()))
-    yield 'NaiveACC', MultilabelNaiveAggregativeQuantifier(ACC(cls()))
-    yield 'NaivePACC', MultilabelNaiveAggregativeQuantifier(PACC(cls()))
-    yield 'HDy', MultilabelNaiveAggregativeQuantifier(HDy(cls()))
+    # yield 'NaivePCC', MultilabelNaiveAggregativeQuantifier(PCC(cls()))
+    # yield 'NaiveACC', MultilabelNaiveAggregativeQuantifier(ACC(cls()))
+    # yield 'NaivePACC', MultilabelNaiveAggregativeQuantifier(PACC(cls()))
+    # yield 'HDy', MultilabelNaiveAggregativeQuantifier(HDy(cls()))
     # yield 'EMQ', MultilabelQuantifier(EMQ(calibratedCls()))
     # yield 'StackCC', MLCC(MultilabelStackedClassifier(cls()))
     # yield 'StackPCC', MLPCC(MultilabelStackedClassifier(cls()))
@@ -135,6 +135,36 @@ def print_info(train, test):
     print(f'MLPE: {qp.error.mae(train.prevalence(), test.prevalence()):.5f}')
 
 
+def save_results(npp_results, app_results, result_path):
+    # results are lists of tuples of (true_prevs, estim_prevs)
+    # each true_prevs is an ndarray of ndim=2, but the second dimension is constrained
+    def _prepare_result_lot(lot_results):
+        true_prevs, estim_prevs = lot_results
+        return {
+            'true_prevs': [true_i[:,0].flatten() for true_i in true_prevs],  # removes the constrained prevalence
+            'estim_prevs': [estim_i[:,0].flatten() for estim_i in estim_prevs]  # removes the constrained prevalence
+        }
+    results = {
+        'npp': _prepare_result_lot(npp_results),
+        'app': _prepare_result_lot(app_results),
+    }
+    pickle.dump(results, open(result_path, 'wb'), pickle.HIGHEST_PROTOCOL)
+
+
+def load_results(result_path):
+    def _unpack_result_lot(lot_result):
+        true_prevs = lot_result['true_prevs']
+        true_prevs = [np.vstack([true_i, 1 - true_i]).T for true_i in true_prevs]  # add the constrained prevalence
+        estim_prevs = lot_result['estim_prevs']
+        estim_prevs = [np.vstack([estim_i, 1 - estim_i]).T for estim_i in estim_prevs]  # add the constrained prevalence
+        return true_prevs, estim_prevs
+    results = pickle.load(open(result_path, 'rb'))
+    results_npp = _unpack_result_lot(results['npp'])
+    results_app = _unpack_result_lot(results['app'])
+    return results_npp, results_app
+
+
+
 def run_experiment(dataset_name, model_name, model):
     result_path = f'{opt.results}/{dataset_name}_{model_name}.pkl'
     if already_run(result_path):
@@ -147,10 +177,11 @@ def run_experiment(dataset_name, model_name, model):
 
     model.fit(train)
 
-    results = dict()
-    results['npp'] = ml_natural_prevalence_prediction(model, test, sample_size, repeats=100)
-    results['app'] = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=21, repeats=10)
-    pickle.dump(results, open(result_path, 'wb'), pickle.HIGHEST_PROTOCOL)
+    results_npp = ml_natural_prevalence_prediction(model, test, sample_size, repeats=100)
+    results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=11, repeats=5)
+    save_results(results_npp, results_app, result_path)
+    results_npp2, results_app2 = load_results(result_path)
+    print('pass')
 
 
 if __name__ == '__main__':

@@ -5,6 +5,7 @@ import quapy as qp
 from MultiLabel.mlquantification import MLAggregativeQuantifier
 from mldata import MultilabelledCollection
 import itertools
+from tqdm import tqdm
 
 
 def __check_error(error_metric):
@@ -63,15 +64,20 @@ def ml_artificial_prevalence_prediction(model,
                                         repeats=10,
                                         random_seed=42):
 
-    test_indexes = []
+    nested_test_indexes = []
     with qp.util.temp_seed(random_seed):
         for cat in test.classes_:
-            test_indexes.append(list(test.artificial_sampling_index_generator(sample_size=sample_size,
+            nested_test_indexes.append(list(test.artificial_sampling_index_generator(sample_size=sample_size,
                                                                               category=cat,
                                                                               n_prevalences=n_prevalences,
                                                                               repeats=repeats)))
-    test_indexes = list(itertools.chain.from_iterable(test_indexes))
-    return _ml_prevalence_predictions(model, test, test_indexes)
+    def _predict_batch(test_indexes):
+        return _ml_prevalence_predictions(model, test, test_indexes)
+
+    predictions = qp.util.parallel(_predict_batch, nested_test_indexes, n_jobs=-1)
+    true_prevs = list(itertools.chain.from_iterable(trues for trues, estims in predictions))
+    estim_prevs = list(itertools.chain.from_iterable(estims for trues, estims in predictions))
+    return true_prevs, estim_prevs
 
 
 def ml_artificial_prevalence_evaluation(model,
