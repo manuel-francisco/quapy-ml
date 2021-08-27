@@ -8,7 +8,7 @@ import itertools
 from tqdm import tqdm
 
 
-def __check_error(error_metric):
+def check_error_str(error_metric):
     if isinstance(error_metric, str):
         error_metric = qp.error.from_name(error_metric)
 
@@ -49,7 +49,7 @@ def ml_natural_prevalence_evaluation(model,
                                      error_metric:Union[str,Callable]='mae',
                                      random_seed=42):
 
-    error_metric = __check_error(error_metric)
+    error_metric = check_error_str(error_metric)
 
     true_prevs, estim_prevs = ml_natural_prevalence_prediction(model, test, sample_size, repeats, random_seed)
 
@@ -88,7 +88,7 @@ def ml_artificial_prevalence_evaluation(model,
                                         error_metric:Union[str,Callable]='mae',
                                         random_seed=42):
 
-    error_metric = __check_error(error_metric)
+    error_metric = check_error_str(error_metric)
 
     true_prevs, estim_prevs = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences, repeats, random_seed)
 

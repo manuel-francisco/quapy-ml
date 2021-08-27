@@ -41,8 +41,8 @@ def models():
     # yield 'NaivePCC', MultilabelNaiveAggregativeQuantifier(PCC(cls()))
     # yield 'NaiveACC', MultilabelNaiveAggregativeQuantifier(ACC(cls()))
     # yield 'NaivePACC', MultilabelNaiveAggregativeQuantifier(PACC(cls()))
-    # yield 'HDy', MultilabelNaiveAggregativeQuantifier(HDy(cls()))
-    # yield 'EMQ', MultilabelQuantifier(EMQ(calibratedCls()))
+    # yield 'NaiveHDy', MultilabelNaiveAggregativeQuantifier(HDy(cls()))
+    # yield 'NaiveSLD', MultilabelNaiveAggregativeQuantifier(EMQ(calibratedCls()))
     # yield 'StackCC', MLCC(MultilabelStackedClassifier(cls()))
     # yield 'StackPCC', MLPCC(MultilabelStackedClassifier(cls()))
     # yield 'StackACC', MLACC(MultilabelStackedClassifier(cls()))
@@ -159,10 +159,14 @@ def load_results(result_path):
         estim_prevs = [np.vstack([estim_i, 1 - estim_i]).T for estim_i in estim_prevs]  # add the constrained prevalence
         return true_prevs, estim_prevs
     results = pickle.load(open(result_path, 'rb'))
-    results_npp = _unpack_result_lot(results['npp'])
-    results_app = _unpack_result_lot(results['app'])
-    return results_npp, results_app
-
+    results = {
+        'npp': _unpack_result_lot(results['npp']),
+        'app': _unpack_result_lot(results['app']),
+    }
+    return results
+    # results_npp = _unpack_result_lot(results['npp'])
+    # results_app = _unpack_result_lot(results['app'])
+    # return results_npp, results_app
 
 
 def run_experiment(dataset_name, model_name, model):
@@ -194,6 +198,8 @@ if __name__ == '__main__':
 
     for datasetname, (modelname,model) in itertools.product(datasets(), models()):
         run_experiment(datasetname, modelname, model)
+
+
 
 
 
