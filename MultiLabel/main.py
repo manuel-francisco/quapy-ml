@@ -38,28 +38,28 @@ n_samples = 5000
 
 def models():
     yield 'NaiveCC', MultilabelNaiveAggregativeQuantifier(CC(cls()))
-    # yield 'NaivePCC', MultilabelNaiveAggregativeQuantifier(PCC(cls()))
-    # yield 'NaiveACC', MultilabelNaiveAggregativeQuantifier(ACC(cls()))
-    # yield 'NaivePACC', MultilabelNaiveAggregativeQuantifier(PACC(cls()))
+    yield 'NaivePCC', MultilabelNaiveAggregativeQuantifier(PCC(cls()))
+    yield 'NaiveACC', MultilabelNaiveAggregativeQuantifier(ACC(cls()))
+    yield 'NaivePACC', MultilabelNaiveAggregativeQuantifier(PACC(cls()))
     # yield 'NaiveHDy', MultilabelNaiveAggregativeQuantifier(HDy(cls()))
     # yield 'NaiveSLD', MultilabelNaiveAggregativeQuantifier(EMQ(calibratedCls()))
-    # yield 'StackCC', MLCC(MultilabelStackedClassifier(cls()))
-    # yield 'StackPCC', MLPCC(MultilabelStackedClassifier(cls()))
-    # yield 'StackACC', MLACC(MultilabelStackedClassifier(cls()))
-    # yield 'StackPACC', MLPACC(MultilabelStackedClassifier(cls()))
+    yield 'StackCC', MLCC(MultilabelStackedClassifier(cls()))
+    yield 'StackPCC', MLPCC(MultilabelStackedClassifier(cls()))
+    yield 'StackACC', MLACC(MultilabelStackedClassifier(cls()))
+    yield 'StackPACC', MLPACC(MultilabelStackedClassifier(cls()))
     # yield 'ChainCC', MLCC(ClassifierChain(cls(), cv=None, order='random'))
     # yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None, order='random'))
     # yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None, order='random'))
     # yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None, order='random'))
     common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
-    # yield 'MRQ-CC', MLRegressionQuantification(MultilabelNaiveQuantifier(CC(cls())), **common)
-    # yield 'MRQ-PCC', MLRegressionQuantification(MultilabelNaiveQuantifier(PCC(cls())),  **common)
-    # yield 'MRQ-ACC', MLRegressionQuantification(MultilabelNaiveQuantifier(ACC(cls())),  **common)
-    # yield 'MRQ-PACC', MLRegressionQuantification(MultilabelNaiveQuantifier(PACC(cls())), **common)
-    # yield 'MRQ-StackCC', MLRegressionQuantification(MLCC(MultilabelStackedClassifier(cls())), **common)
-    # yield 'MRQ-StackPCC', MLRegressionQuantification(MLPCC(MultilabelStackedClassifier(cls())), **common)
-    # yield 'MRQ-StackACC', MLRegressionQuantification(MLACC(MultilabelStackedClassifier(cls())), **common)
-    # yield 'MRQ-StackPACC', MLRegressionQuantification(MLPACC(MultilabelStackedClassifier(cls())),  **common)
+    yield 'MRQ-CC', MLRegressionQuantification(MultilabelNaiveQuantifier(CC(cls())), **common)
+    yield 'MRQ-PCC', MLRegressionQuantification(MultilabelNaiveQuantifier(PCC(cls())),  **common)
+    yield 'MRQ-ACC', MLRegressionQuantification(MultilabelNaiveQuantifier(ACC(cls())),  **common)
+    yield 'MRQ-PACC', MLRegressionQuantification(MultilabelNaiveQuantifier(PACC(cls())), **common)
+    yield 'MRQ-StackCC', MLRegressionQuantification(MLCC(MultilabelStackedClassifier(cls())), **common)
+    yield 'MRQ-StackPCC', MLRegressionQuantification(MLPCC(MultilabelStackedClassifier(cls())), **common)
+    yield 'MRQ-StackACC', MLRegressionQuantification(MLACC(MultilabelStackedClassifier(cls())), **common)
+    yield 'MRQ-StackPACC', MLRegressionQuantification(MLPACC(MultilabelStackedClassifier(cls())),  **common)
     # yield 'MRQ-StackCC-app', MLRegressionQuantification(MLCC(MultilabelStackedClassifier(cls())), protocol='app', **common)
     # yield 'MRQ-StackPCC-app', MLRegressionQuantification(MLPCC(MultilabelStackedClassifier(cls())), protocol='app', **common)
     # yield 'MRQ-StackACC-app', MLRegressionQuantification(MLACC(MultilabelStackedClassifier(cls())), protocol='app', **common)
@@ -176,6 +176,8 @@ def run_experiment(dataset_name, model_name, model):
 
     print(f'runing experiment {dataset_name} x {model_name}')
     train, test = get_dataset(dataset_name)
+    if train.n_classes>100:
+        return
 
     print_info(train, test)
 
