@@ -9,7 +9,7 @@ from sklearn.linear_model import LogisticRegression, Ridge, Lasso, LassoCV, Mult
     ElasticNet, MultiTaskElasticNetCV, MultiTaskElasticNet, LinearRegression, ARDRegression, BayesianRidge, SGDRegressor
 
 import quapy as qp
-from MultiLabel.mlclassification import MultilabelStackedClassifier
+from MultiLabel.mlclassification import MLStackedClassifier
 from MultiLabel.mldata import MultilabelledCollection
 from method.aggregative import CC, ACC, PACC, AggregativeQuantifier
 from method.base import BaseQuantifier
@@ -25,7 +25,19 @@ class MLQuantifier:
     def quantify(self, instances): ...
 
 
+class MLMLPE(MLQuantifier):
+    def fit(self, data: MultilabelledCollection):
+        self.tr_prev = data.prevalence()
+        return self
+
+    def quantify(self, instances):
+        return self.tr_prev
+
+
 class MLAggregativeQuantifier(MLQuantifier):
+    def __init__(self, mlcls):
+        self.learner = mlcls
+
     def fit(self, data:MultilabelledCollection):
         self.learner.fit(*data.Xy)
         return self
@@ -42,9 +54,6 @@ class MLAggregativeQuantifier(MLQuantifier):
 
 
 class MLCC(MLAggregativeQuantifier):
-    def __init__(self, mlcls):
-        self.learner = mlcls
-
     def preclassify(self, instances):
         return self.learner.predict(instances)
 
@@ -55,16 +64,11 @@ class MLCC(MLAggregativeQuantifier):
 
 
 class MLPCC(MLCC):
-    def __init__(self, mlcls):
-        self.learner = mlcls
-
     def preclassify(self, instances):
         return self.learner.predict_proba(instances)
 
 
 class MLACC(MLCC):
-    def __init__(self, mlcls):
-        self.learner = mlcls
 
     def fit(self, data:MultilabelledCollection, train_prop=0.6):
         self.classes_ = data.classes_
@@ -88,8 +92,6 @@ class MLACC(MLCC):
 
 
 class MLPACC(MLPCC):
-    def __init__(self, mlcls):
-        self.learner = mlcls
 
     def fit(self, data:MultilabelledCollection, train_prop=0.6):
         self.classes_ = data.classes_
@@ -109,7 +111,7 @@ class MLPACC(MLPCC):
         return pacc_prevs
 
 
-class MultilabelNaiveQuantifier(MLQuantifier):
+class MLNaiveQuantifier(MLQuantifier):
     def __init__(self, q:BaseQuantifier, n_jobs=-1):
         self.q = q
         self.estimators = None
@@ -132,7 +134,7 @@ class MultilabelNaiveQuantifier(MLQuantifier):
         return np.asarray([neg_prevs, pos_prevs]).T
 
 
-class MultilabelNaiveAggregativeQuantifier(MultilabelNaiveQuantifier, MLAggregativeQuantifier):
+class MLNaiveAggregativeQuantifier(MLNaiveQuantifier, MLAggregativeQuantifier):
     def __init__(self, q:AggregativeQuantifier, n_jobs=-1):
         assert isinstance(q, AggregativeQuantifier), 'the quantifier is not of type aggregative!'
         self.q = q
@@ -156,7 +158,7 @@ class MultilabelNaiveAggregativeQuantifier(MultilabelNaiveQuantifier, MLAggregat
 
 class MLRegressionQuantification:
     def __init__(self,
-                 mlquantifier=MultilabelNaiveQuantifier(CC(LinearSVC())),
+                 mlquantifier=MLNaiveQuantifier(CC(LinearSVC())),
                  regression='ridge',
                  protocol='npp',
                  n_samples=500,
@@ -201,36 +203,31 @@ class MLRegressionQuantification:
 
         return Xs, ys
 
+    def _extract_features(self, sample, Xs, ys, samples_mean, samples_std):
+        ys.append(sample.prevalence()[:, 1])
+        Xs.append(self.estimator.quantify(sample.instances)[:, 1])
+        if self.means:
+            samples_mean.append(sample.instances.mean(axis=0).getA().flatten())
+        if self.stds:
+            samples_std.append(sample.instances.todense().std(axis=0).getA().flatten())
+
     def generate_samples_npp(self, val):
-        samples_mean = []
-        samples_std = []
-        Xs = []
-        ys = []
+        Xs, ys = [], []
+        samples_mean, samples_std = [], []
         for sample in val.natural_sampling_generator(sample_size=self.sample_size, repeats=self.n_samples):
-            ys.append(sample.prevalence()[:, 1])
-            Xs.append(self.estimator.quantify(sample.instances)[:, 1])
-            if self.means:
-                samples_mean.append(sample.instances.mean(axis=0).getA().flatten())
-            if self.stds:
-                samples_std.append(sample.instances.todense().std(axis=0).getA().flatten())
+            self._extract_features(self, sample, Xs, ys, samples_mean, samples_std)
         return self._prepare_arrays(Xs, ys, samples_mean, samples_std)
 
+
     def generate_samples_app(self, val):
-        samples_mean = []
-        samples_std = []
-        Xs = []
-        ys = []
+        Xs, ys = [], []
+        samples_mean, samples_std = [], []
         ncats = len(self.classes_)
         nprevs  = 21
         repeats = max(self.n_samples // (ncats * nprevs), 1)
         for cat in self.classes_:
             for sample in val.artificial_sampling_generator(sample_size=self.sample_size, category=cat, n_prevalences=nprevs, repeats=repeats):
-                ys.append(sample.prevalence()[:, 1])
-                Xs.append(self.estimator.quantify(sample.instances)[:, 1])
-                if self.means:
-                    samples_mean.append(sample.instances.mean(axis=0).getA().flatten())
-                if self.stds:
-                    samples_std.append(sample.instances.todense().std(axis=0).getA().flatten())
+                self._extract_features(self, sample, Xs, ys, samples_mean, samples_std)
         return self._prepare_arrays(Xs, ys, samples_mean, samples_std)
 
     def fit(self, data:MultilabelledCollection):

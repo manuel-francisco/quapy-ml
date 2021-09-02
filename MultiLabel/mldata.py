@@ -35,6 +35,10 @@ class MultilabelledCollection:
         return len(self.classes_)
 
     @property
+    def n_features(self):
+        return self.instances.shape[1]
+
+    @property
     def binary(self):
         return False
 
@@ -43,8 +47,8 @@ class MultilabelledCollection:
 
     def sampling_multi_index(self, size, cat, prev=None):
         if prev is None:  # no prevalence was indicated; returns an index for uniform sampling
-            return np.random.choice(len(self), size, replace=size>len(self))
-        aux = LabelledCollection(self.__gen_index(), self.labels[:,cat])
+            return np.random.choice(len(self), size, replace=size > len(self))
+        aux = LabelledCollection(self.__gen_index(), self.labels[:, cat])
         return aux.sampling_index(size, *[1-prev, prev])
 
     def uniform_sampling_multi_index(self, size):

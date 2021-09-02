@@ -6,10 +6,10 @@ from scipy.stats import ttest_ind_from_stats, wilcoxon
 class Table:
     VALID_TESTS = [None, "wilcoxon", "ttest"]
 
-    def __init__(self, benchmarks, methods, lower_is_better=True, ttest='ttest', prec_mean=3,
+    def __init__(self, benchmarks, methods, lower_is_better=True, significance_test='ttest', prec_mean=3,
                  clean_zero=False, show_std=False, prec_std=3, average=True, missing=None, missing_str='--',
                  color=True):
-        assert ttest in self.VALID_TESTS, f'unknown test, valid are {self.VALID_TESTS}'
+        assert significance_test in self.VALID_TESTS, f'unknown test, valid are {self.VALID_TESTS}'
 
         self.benchmarks = np.asarray(benchmarks)
         self.benchmark_index = {row: i for i, row in enumerate(benchmarks)}
@@ -21,7 +21,7 @@ class Table:
         # keyed (#rows,#cols)-ndarrays holding computations from self.map['values']
         self._addmap('values', dtype=object)
         self.lower_is_better = lower_is_better
-        self.ttest = ttest
+        self.ttest = significance_test
         self.prec_mean = prec_mean
         self.clean_zero = clean_zero
         self.show_std = show_std
@@ -156,8 +156,9 @@ class Table:
         return all(self.map['fill'][:, self.method_index[col]])
 
     def _addave(self):
-        ave = Table(['ave'], self.methods, lower_is_better=self.lower_is_better, ttest=self.ttest, average=False,
-                    missing=self.missing, missing_str=self.missing_str)
+        ave = Table(['ave'], self.methods, lower_is_better=self.lower_is_better, significance_test=self.ttest, average=False,
+                    missing=self.missing, missing_str=self.missing_str, prec_mean=self.prec_mean, prec_std=self.prec_std,
+                    show_std=self.show_std)
         for col in self.methods:
             values = None
             if self._is_column_full(col):
@@ -267,8 +268,33 @@ class Table:
             tab += self.latexAverage()
         return tab
 
+    def latexTabularT(self, benchmark_replace={}, method_replace={}, average=True, side=False):
+        def withside(label):
+            return '\side{'+label+'}' if side else label
+
+        tab = ' & '
+        tab += ' & '.join([withside(benchmark_replace.get(col, col)) for col in self.benchmarks])
+        if average:
+            tab += ' & ' + withside('Ave')
+        tab += ' \\\\\hline\n'
+        for row in self.methods:
+            rowname = method_replace.get(row, row)
+            tab += rowname + ' & '
+            tab += self.latexRowT(row, endl='')
+            if average:
+                tab += ' & '
+                tab += self.average.latexCell('ave', row)
+                tab += '\\\\\hline\n'
+        return tab
+
     def latexRow(self, benchmark, endl='\\\\\hline\n'):
         s = [self.latexCell(benchmark, col) for col in self.methods]
+        s = ' & '.join(s)
+        s += ' ' + endl
+        return s
+
+    def latexRowT(self, method, endl='\\\\\hline\n'):
+        s = [self.latexCell(benchmark, method) for benchmark in self.benchmarks]
         s = ' & '.join(s)
         s += ' ' + endl
         return s

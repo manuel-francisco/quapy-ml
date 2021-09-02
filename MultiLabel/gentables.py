@@ -7,12 +7,12 @@ from tqdm import tqdm
 from skmultilearn.dataset import load_dataset, available_data_sets
 from scipy.sparse import csr_matrix
 import quapy as qp
-from MultiLabel.main import load_results
-from MultiLabel.mlclassification import MultilabelStackedClassifier
+from MultiLabel.main import load_results, SKMULTILEARN_RED_DATASETS, TC_DATASETS, sample_size
+from MultiLabel.mlclassification import MLStackedClassifier
 from MultiLabel.mldata import MultilabelledCollection
-from MultiLabel.mlquantification import MultilabelNaiveQuantifier, MLCC, MLPCC, MLRegressionQuantification, \
+from MultiLabel.mlquantification import MLNaiveQuantifier, MLCC, MLPCC, MLRegressionQuantification, \
     MLACC, \
-    MLPACC, MultilabelNaiveAggregativeQuantifier
+    MLPACC, MLNaiveAggregativeQuantifier
 from MultiLabel.tabular import Table
 from method.aggregative import PACC, CC, EMQ, PCC, ACC, HDy
 import numpy as np
@@ -22,29 +22,56 @@ import sys
 import os
 import pickle
 
-models = ['NaiveCC', 'NaivePCC', 'NaiveACC', 'NaivePACC', 'NaiveHDy', 'NaiveSLD']
-datasets = sorted(set([x[0] for x in available_data_sets().keys()]))
+models = [#'MLPE',
+          'NaiveCC', 'NaivePCC', 'NaiveACC', 'NaivePACC', #'NaiveHDy', 'NaiveSLD',
+          'StackCC', 'StackPCC', 'StackACC', 'StackPACC',
+          'MRQ-CC', 'MRQ-PCC', 'MRQ-ACC', 'MRQ-PACC',
+          'MRQ-StackCC', 'MRQ-StackPCC', 'MRQ-StackACC', 'MRQ-StackPACC',
+          'MRQ-StackCC-app', 'MRQ-StackPCC-app', 'MRQ-StackACC-app', 'MRQ-StackPACC-app',
+          'LSP-CC', 'LSP-ACC'
+]
+
+# datasets = sorted(set([x[0] for x in available_data_sets().keys()]))
+datasets = TC_DATASETS
+
+
 
 
 def generate_table(path, protocol, error):
-    print(f'generating {path}')
-    table = Table(datasets, models)
-    for dataset, model in itertools.product(datasets, models):
+
+    def compute_score_job(args):
+        dataset, model = args
         result_path = f'{opt.results}/{dataset}_{model}.pkl'
         if os.path.exists(result_path):
+            print('+', end='')
+            sys.stdout.flush()
             result = load_results(result_path)
             true_prevs, estim_prevs = result[protocol]
             scores = np.asarray([error(trues, estims) for trues, estims in zip(true_prevs, estim_prevs)]).flatten()
+            return dataset, model, scores
+        print('-', end='')
+        sys.stdout.flush()
+        return None
+
+
+    print(f'\ngenerating {path}')
+    table = Table(datasets, models, prec_mean=4, significance_test='wilcoxon')
+    results = qp.util.parallel(compute_score_job, list(itertools.product(datasets, models)), n_jobs=-1)
+    print()
+
+    for r in results:
+        if r is not None:
+            dataset, model, scores = r
             table.add(dataset, model, scores)
 
     tabular = """
     \\resizebox{\\textwidth}{!}{%
             \\begin{tabular}{|c||""" + ('c|' * len(models)) + """} \hline
             """
-    dataset_replace = {'tmc2007_500': 'tmc2007\_500'}
+    dataset_replace = {'tmc2007_500': 'tmc2007\_500', 'tmc2007_500-red': 'tmc2007\_500-red'}
     method_replace = {}
 
-    tabular += table.latexTabular(benchmark_replace=dataset_replace, method_replace=method_replace)
+    tabular += table.latexTabularT(benchmark_replace=dataset_replace, method_replace=method_replace, side=True)
     tabular += """
         \end{tabular}%
         }
@@ -61,13 +88,17 @@ if __name__ == '__main__':
                         help=f'path where to store the tables')
     opt = parser.parse_args()
 
-    os.makedirs(opt.results, exist_ok=True)
+    assert os.path.exists(opt.results), f'result directory {opt.results} does not exist'
     os.makedirs(opt.tablepath, exist_ok=True)
 
-    eval_error = qp.error.ae
-    generate_table(f'{opt.tablepath}/npp.ae.tex', protocol='npp', error=eval_error)
-    generate_table(f'{opt.tablepath}/app.ae.tex', protocol='app', error=eval_error)
+    qp.environ["SAMPLE_SIZE"] = sample_size
+    absolute_error = qp.error.ae
+    relative_absolute_error = qp.error.rae
 
+    generate_table(f'{opt.tablepath}/npp.ae.tex', protocol='npp', error=absolute_error)
+    generate_table(f'{opt.tablepath}/app.ae.tex', protocol='app', error=absolute_error)
+    generate_table(f'{opt.tablepath}/npp.rae.tex', protocol='npp', error=relative_absolute_error)
+    generate_table(f'{opt.tablepath}/app.rae.tex', protocol='app', error=relative_absolute_error)
 
 
 

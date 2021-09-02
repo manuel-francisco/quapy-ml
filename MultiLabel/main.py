@@ -7,11 +7,11 @@ from tqdm import tqdm
 from skmultilearn.dataset import load_dataset, available_data_sets
 from scipy.sparse import csr_matrix
 import quapy as qp
-from MultiLabel.mlclassification import MultilabelStackedClassifier
+from MultiLabel.mlclassification import MLStackedClassifier, LabelSpacePartion, MLTwinSVM, MLknn
 from MultiLabel.mldata import MultilabelledCollection
-from MultiLabel.mlquantification import MultilabelNaiveQuantifier, MLCC, MLPCC, MLRegressionQuantification, \
+from MultiLabel.mlquantification import MLNaiveQuantifier, MLCC, MLPCC, MLRegressionQuantification, \
     MLACC, \
-    MLPACC, MultilabelNaiveAggregativeQuantifier
+    MLPACC, MLNaiveAggregativeQuantifier, MLMLPE
 from method.aggregative import PACC, CC, EMQ, PCC, ACC, HDy
 import numpy as np
 from data.dataset  import Dataset
@@ -35,79 +35,135 @@ def calibratedCls():
 sample_size = 100
 n_samples = 5000
 
+SKMULTILEARN_ALL_DATASETS = sorted(set([x[0] for x in available_data_sets().keys()]))
+SKMULTILEARN_RED_DATASETS = [x+'-red' for x in SKMULTILEARN_ALL_DATASETS]
+TC_DATASETS = ['reuters21578', 'jrcall', 'ohsumed', 'rcv1']
+
+DATASETS = TC_DATASETS
+
+
+
+
 
 def models():
-    yield 'NaiveCC', MultilabelNaiveAggregativeQuantifier(CC(cls()))
-    yield 'NaivePCC', MultilabelNaiveAggregativeQuantifier(PCC(cls()))
-    yield 'NaiveACC', MultilabelNaiveAggregativeQuantifier(ACC(cls()))
-    yield 'NaivePACC', MultilabelNaiveAggregativeQuantifier(PACC(cls()))
-    # yield 'NaiveHDy', MultilabelNaiveAggregativeQuantifier(HDy(cls()))
-    # yield 'NaiveSLD', MultilabelNaiveAggregativeQuantifier(EMQ(calibratedCls()))
-    yield 'StackCC', MLCC(MultilabelStackedClassifier(cls()))
-    yield 'StackPCC', MLPCC(MultilabelStackedClassifier(cls()))
-    yield 'StackACC', MLACC(MultilabelStackedClassifier(cls()))
-    yield 'StackPACC', MLPACC(MultilabelStackedClassifier(cls()))
+    yield 'MLPE', MLMLPE()
+    yield 'NaiveCC', MLNaiveAggregativeQuantifier(CC(cls()))
+    yield 'NaivePCC', MLNaiveAggregativeQuantifier(PCC(cls()))
+    yield 'NaiveACC', MLNaiveAggregativeQuantifier(ACC(cls()))
+    yield 'NaivePACC', MLNaiveAggregativeQuantifier(PACC(cls()))
+    # yield 'NaiveHDy', MLNaiveAggregativeQuantifier(HDy(cls()))
+    # yield 'NaiveSLD', MLNaiveAggregativeQuantifier(EMQ(calibratedCls()))
+    yield 'StackCC', MLCC(MLStackedClassifier(cls()))
+    yield 'StackPCC', MLPCC(MLStackedClassifier(cls()))
+    yield 'StackACC', MLACC(MLStackedClassifier(cls()))
+    yield 'StackPACC', MLPACC(MLStackedClassifier(cls()))
     # yield 'ChainCC', MLCC(ClassifierChain(cls(), cv=None, order='random'))
     # yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None, order='random'))
     # yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None, order='random'))
     # yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None, order='random'))
     common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
-    yield 'MRQ-CC', MLRegressionQuantification(MultilabelNaiveQuantifier(CC(cls())), **common)
-    yield 'MRQ-PCC', MLRegressionQuantification(MultilabelNaiveQuantifier(PCC(cls())),  **common)
-    yield 'MRQ-ACC', MLRegressionQuantification(MultilabelNaiveQuantifier(ACC(cls())),  **common)
-    yield 'MRQ-PACC', MLRegressionQuantification(MultilabelNaiveQuantifier(PACC(cls())), **common)
-    yield 'MRQ-StackCC', MLRegressionQuantification(MLCC(MultilabelStackedClassifier(cls())), **common)
-    yield 'MRQ-StackPCC', MLRegressionQuantification(MLPCC(MultilabelStackedClassifier(cls())), **common)
-    yield 'MRQ-StackACC', MLRegressionQuantification(MLACC(MultilabelStackedClassifier(cls())), **common)
-    yield 'MRQ-StackPACC', MLRegressionQuantification(MLPACC(MultilabelStackedClassifier(cls())),  **common)
-    # yield 'MRQ-StackCC-app', MLRegressionQuantification(MLCC(MultilabelStackedClassifier(cls())), protocol='app', **common)
-    # yield 'MRQ-StackPCC-app', MLRegressionQuantification(MLPCC(MultilabelStackedClassifier(cls())), protocol='app', **common)
-    # yield 'MRQ-StackACC-app', MLRegressionQuantification(MLACC(MultilabelStackedClassifier(cls())), protocol='app', **common)
-    # yield 'MRQ-StackPACC-app', MLRegressionQuantification(MLPACC(MultilabelStackedClassifier(cls())), protocol='app',  **common)
+    yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
+    yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
+    yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
+    yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
+    yield 'MRQ-StackCC', MLRegressionQuantification(MLCC(MLStackedClassifier(cls())), **common)
+    yield 'MRQ-StackPCC', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), **common)
+    yield 'MRQ-StackACC', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), **common)
+    yield 'MRQ-StackPACC', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), **common)
+    yield 'MRQ-StackCC-app', MLRegressionQuantification(MLCC(MLStackedClassifier(cls())), protocol='app', **common)
+    yield 'MRQ-StackPCC-app', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), protocol='app', **common)
+    yield 'MRQ-StackACC-app', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), protocol='app', **common)
+    yield 'MRQ-StackPACC-app', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), protocol='app', **common)
     # yield 'MRQ-ChainCC', MLRegressionQuantification(MLCC(ClassifierChain(cls())), **common)
     # yield 'MRQ-ChainPCC', MLRegressionQuantification(MLPCC(ClassifierChain(cls())), **common)
     # yield 'MRQ-ChainACC', MLRegressionQuantification(MLACC(ClassifierChain(cls())), **common)
     # yield 'MRQ-ChainPACC', MLRegressionQuantification(MLPACC(ClassifierChain(cls())), **common)
+    # yield 'LSP-CC', MLCC(LabelSpacePartion(cls()))
+    # yield 'LSP-ACC', MLACC(LabelSpacePartion(cls()))
+    # yield 'TwinSVM-CC', MLCC(MLTwinSVM())
+    # yield 'TwinSVM-ACC', MLACC(MLTwinSVM())
+    yield 'MLKNN-CC', MLCC(MLknn())
+    yield 'MLKNN-PCC', MLPCC(MLknn())
+    yield 'MLKNN-ACC', MLACC(MLknn())
+    yield 'MLKNN-PACC', MLPACC(MLknn())
 
 
-# dataset = 'reuters21578'
-# picklepath = '/home/moreo/word-class-embeddings/pickles'
-# data = Dataset.load(dataset, pickle_path=f'{picklepath}/{dataset}.pickle')
-# Xtr, Xte = data.vectorize()
-# ytr = data.devel_labelmatrix.todense().getA()
-# yte = data.test_labelmatrix.todense().getA()
+def get_dataset(dataset_name, dopickle=True):
+    datadir = f'{qp.util.get_quapy_home()}/pickles'
+    datapath = f'{datadir}/{dataset_name}.pkl'
+    if dopickle:
+        if os.path.exists(datapath):
+            print(f'returning pickled object in {datapath}')
+            return pickle.load(open(datapath, 'rb'))
 
-# remove categories with < 10 training documents
-# to_keep = np.logical_and(ytr.sum(axis=0)>=50, yte.sum(axis=0)>=50)
-# ytr = ytr[:, to_keep]
-# yte = yte[:, to_keep]
-# print(f'num categories = {ytr.shape[1]}')
+    if dataset_name in SKMULTILEARN_ALL_DATASETS + SKMULTILEARN_RED_DATASETS:
+        clean_name = dataset_name.replace('-red','')
+        Xtr, ytr, feature_names, label_names = load_dataset(clean_name, 'train')
+        Xte, yte, _, _ = load_dataset(clean_name, 'test')
+        print(f'n-labels = {len(label_names)}')
 
+        Xtr = csr_matrix(Xtr)
+        Xte = csr_matrix(Xte)
 
-def datasets():
-    dataset_list = sorted(set([x[0] for x in available_data_sets().keys()]))
-    for dataset_name in dataset_list:
-        yield dataset_name
+        ytr = ytr.todense().getA()
+        yte = yte.todense().getA()
 
+        if dataset_name.endswith('-red'):
+            TO_SELECT = 10
+            nC = ytr.shape[1]
+            tr_counts = ytr.sum(axis=0)
+            te_counts = yte.sum(axis=0)
+            if nC > TO_SELECT:
+                Y = ytr.T.dot(ytr)  # class-class coincidence matrix
+                Y[np.triu_indices(nC)] = 0  # zeroing all duplicates entries and the diagonal
+                order_ij = np.argsort(-Y, axis=None)
+                selected = set()
+                p=0
+                while len(selected) < TO_SELECT:
+                    highest_index = order_ij[p]
+                    class_i = highest_index // nC
+                    class_j = highest_index % nC
+                    # if there is only one class to go, then add the most populated one
+                    most_populated, least_populated = (class_i, class_j) if tr_counts[class_i] > tr_counts[class_j] else (class_j, class_i)
+                    if te_counts[most_populated]>0:
+                        selected.add(most_populated)
+                    if len(selected) < TO_SELECT:
+                        if te_counts[least_populated]>0:
+                            selected.add(least_populated)
+                    p+=1
+                selected = np.asarray(sorted(selected))
+                ytr = ytr[:,selected]
+                yte = yte[:, selected]
+        # else:
+            # remove categories without positives in the training or test splits
+            # valid_categories = np.logical_and(ytr.sum(axis=0)>5, yte.sum(axis=0)>5)
+            # ytr = ytr[:, valid_categories]
+            # yte = yte[:, valid_categories]
 
-def get_dataset(dataset_name):
-    Xtr, ytr, feature_names, label_names = load_dataset(dataset_name, 'train')
-    Xte, yte, _, _ = load_dataset(dataset_name, 'test')
-    print(f'n-labels = {len(label_names)}')
+    elif dataset_name in TC_DATASETS:
+        picklepath = '/home/moreo/word-class-embeddings/pickles'
+        data = Dataset.load(dataset_name, pickle_path=f'{picklepath}/{dataset_name}.pickle')
+        Xtr, Xte = data.vectorize()
+        ytr = data.devel_labelmatrix.todense().getA()
+        yte = data.test_labelmatrix.todense().getA()
 
-    Xtr = csr_matrix(Xtr)
-    Xte = csr_matrix(Xte)
+        # remove categories with < 50 training or test documents
+        # to_keep = np.logical_and(ytr.sum(axis=0)>=50, yte.sum(axis=0)>=50)
+        # keep the 10 most populated categories
+        to_keep = np.argsort(ytr.sum(axis=0))[-10:]
+        ytr = ytr[:, to_keep]
+        yte = yte[:, to_keep]
+        print(f'num categories = {ytr.shape[1]}')
 
-    ytr = ytr.todense().getA()
-    yte = yte.todense().getA()
-
-    # remove categories without positives in the training or test splits
-    valid_categories = np.logical_and(ytr.sum(axis=0)>5, yte.sum(axis=0)>5)
-    ytr = ytr[:, valid_categories]
-    yte = yte[:, valid_categories]
+    else:
+        raise ValueError(f'unknown dataset {dataset_name}')
 
     train = MultilabelledCollection(Xtr, ytr)
     test = MultilabelledCollection(Xte, yte)
+
+    if dopickle:
+        os.makedirs(datadir, exist_ok=True)
+        pickle.dump((train, test), open(datapath, 'wb'), pickle.HIGHEST_PROTOCOL)
 
     return train, test
 
@@ -176,8 +232,8 @@ def run_experiment(dataset_name, model_name, model):
 
     print(f'runing experiment {dataset_name} x {model_name}')
     train, test = get_dataset(dataset_name)
-    if train.n_classes>100:
-        return
+    # if train.n_classes>100:
+    #     return
 
     print_info(train, test)
 
@@ -186,8 +242,6 @@ def run_experiment(dataset_name, model_name, model):
     results_npp = ml_natural_prevalence_prediction(model, test, sample_size, repeats=100)
     results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=11, repeats=5)
     save_results(results_npp, results_app, result_path)
-    results_npp2, results_app2 = load_results(result_path)
-    print('pass')
 
 
 if __name__ == '__main__':
@@ -198,7 +252,7 @@ if __name__ == '__main__':
 
     os.makedirs(opt.results, exist_ok=True)
 
-    for datasetname, (modelname,model) in itertools.product(datasets(), models()):
+    for datasetname, (modelname,model) in itertools.product(DATASETS, models()):
         run_experiment(datasetname, modelname, model)
 
 
