@@ -23,12 +23,19 @@ import os
 import pickle
 
 models = [#'MLPE',
-          'NaiveCC', 'NaivePCC', 'NaiveACC', 'NaivePACC', #'NaiveHDy', 'NaiveSLD',
-          'StackCC', 'StackPCC', 'StackACC', 'StackPACC',
-          'MRQ-CC', 'MRQ-PCC', 'MRQ-ACC', 'MRQ-PACC',
-          'MRQ-StackCC', 'MRQ-StackPCC', 'MRQ-StackACC', 'MRQ-StackPACC',
-          'MRQ-StackCC-app', 'MRQ-StackPCC-app', 'MRQ-StackACC-app', 'MRQ-StackPACC-app',
-          'LSP-CC', 'LSP-ACC'
+    'NaiveCC', 'NaivePCC', 'NaivePCCcal', 'NaiveACC', 'NaivePACC', 'NaivePACCcal', 'NaiveACCit', 'NaivePACCit',
+    #'NaiveHDy', 'NaiveSLD',
+    'ChainCC', 'ChainPCC', 'ChainACC', 'ChainPACC',
+    'StackCC', 'StackPCC', 'StackPCCcal', 'StackACC', 'StackPACC', 'StackPACCcal', 'StackACCit', 'StackP'
+                                                                  'ACCit',
+    'MRQ-CC', 'MRQ-PCC', 'MRQ-ACC', 'MRQ-PACC',  'MRQ-ACCit', 'MRQ-PACCit',
+    'StackMRQ-CC', 'StackMRQ-PCC', 'StackMRQ-ACC', 'StackMRQ-PACC',
+    'MRQ-StackCC', 'MRQ-StackPCC', 'MRQ-StackACC', 'MRQ-StackPACC',
+    'StackMRQ-StackCC', 'StackMRQ-StackPCC', 'StackMRQ-StackACC', 'StackMRQ-StackPACC',
+    'MRQ-StackCC-app', 'MRQ-StackPCC-app', 'MRQ-StackACC-app', 'MRQ-StackPACC-app',
+    'StackMRQ-StackCC-app', 'StackMRQ-StackPCC-app', 'StackMRQ-StackACC-app', 'StackMRQ-StackPACC-app',
+    'LSP-CC', 'LSP-ACC', 'MLKNN-CC', 'MLKNN-ACC',
+    'MLAdjustedC', 'MLStackAdjustedC', 'MLprobAdjustedC', 'MLStackProbAdjustedC'
 ]
 
 # datasets = sorted(set([x[0] for x in available_data_sets().keys()]))
@@ -64,6 +71,12 @@ def generate_table(path, protocol, error):
             dataset, model, scores = r
             table.add(dataset, model, scores)
 
+    save_table(table, path)
+    save_table(table.getRankTable(), path.replace('.tex','.rank.tex'))
+
+
+
+def save_table(table, path):
     tabular = """
     \\resizebox{\\textwidth}{!}{%
             \\begin{tabular}{|c||""" + ('c|' * len(models)) + """} \hline
@@ -78,7 +91,6 @@ def generate_table(path, protocol, error):
     """
     with open(path, 'wt') as foo:
         foo.write(tabular)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Experiments for multi-label quantification')

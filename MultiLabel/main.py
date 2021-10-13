@@ -2,6 +2,8 @@ import argparse
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import LogisticRegression
 import itertools
+
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain
 from tqdm import tqdm
 from skmultilearn.dataset import load_dataset, available_data_sets
@@ -11,7 +13,7 @@ from MultiLabel.mlclassification import MLStackedClassifier, LabelSpacePartion, 
 from MultiLabel.mldata import MultilabelledCollection
 from MultiLabel.mlquantification import MLNaiveQuantifier, MLCC, MLPCC, MLRegressionQuantification, \
     MLACC, \
-    MLPACC, MLNaiveAggregativeQuantifier, MLMLPE
+    MLPACC, MLNaiveAggregativeQuantifier, MLMLPE, StackMLRQuantifier, MLadjustedCount, MLprobAdjustedCount
 from method.aggregative import PACC, CC, EMQ, PCC, ACC, HDy
 import numpy as np
 from data.dataset  import Dataset
@@ -49,23 +51,33 @@ def models():
     yield 'MLPE', MLMLPE()
     yield 'NaiveCC', MLNaiveAggregativeQuantifier(CC(cls()))
     yield 'NaivePCC', MLNaiveAggregativeQuantifier(PCC(cls()))
+    yield 'NaivePCCcal', MLNaiveAggregativeQuantifier(PCC(calibratedCls()))
     yield 'NaiveACC', MLNaiveAggregativeQuantifier(ACC(cls()))
     yield 'NaivePACC', MLNaiveAggregativeQuantifier(PACC(cls()))
+    yield 'NaivePACCcal', MLNaiveAggregativeQuantifier(PACC(calibratedCls()))
+    yield 'NaiveACCit', MLNaiveAggregativeQuantifier(ACC(cls()))
+    yield 'NaivePACCit', MLNaiveAggregativeQuantifier(PACC(cls()))
     # yield 'NaiveHDy', MLNaiveAggregativeQuantifier(HDy(cls()))
     # yield 'NaiveSLD', MLNaiveAggregativeQuantifier(EMQ(calibratedCls()))
     yield 'StackCC', MLCC(MLStackedClassifier(cls()))
     yield 'StackPCC', MLPCC(MLStackedClassifier(cls()))
+    yield 'StackPCCcal', MLPCC(MLStackedClassifier(calibratedCls()))
     yield 'StackACC', MLACC(MLStackedClassifier(cls()))
     yield 'StackPACC', MLPACC(MLStackedClassifier(cls()))
-    # yield 'ChainCC', MLCC(ClassifierChain(cls(), cv=None, order='random'))
-    # yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None, order='random'))
-    # yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None, order='random'))
-    # yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None, order='random'))
+    yield 'StackPACCcal', MLPACC(MLStackedClassifier(calibratedCls()))
+    yield 'StackACCit', MLACC(MLStackedClassifier(cls()))
+    yield 'StackPACCit', MLPACC(MLStackedClassifier(cls()))
+    # yield 'ChainCC', MLCC(ClassifierChain(cls(), cv=None))
+    # yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None))
+    # yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None))
+    # yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None))
     common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
     yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
     yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
     yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
     yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
+    yield 'MRQ-ACCit', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
+    yield 'MRQ-PACCit', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
     yield 'MRQ-StackCC', MLRegressionQuantification(MLCC(MLStackedClassifier(cls())), **common)
     yield 'MRQ-StackPCC', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), **common)
     yield 'MRQ-StackACC', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), **common)
@@ -74,6 +86,23 @@ def models():
     yield 'MRQ-StackPCC-app', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), protocol='app', **common)
     yield 'MRQ-StackACC-app', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), protocol='app', **common)
     yield 'MRQ-StackPACC-app', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), protocol='app', **common)
+    yield 'StackMRQ-CC', StackMLRQuantifier(MLNaiveQuantifier(CC(cls())), **common)
+    yield 'StackMRQ-PCC', StackMLRQuantifier(MLNaiveQuantifier(PCC(cls())), **common)
+    yield 'StackMRQ-ACC', StackMLRQuantifier(MLNaiveQuantifier(ACC(cls())), **common)
+    yield 'StackMRQ-PACC', StackMLRQuantifier(MLNaiveQuantifier(PACC(cls())), **common)
+    yield 'StackMRQ-StackCC', StackMLRQuantifier(MLCC(MLStackedClassifier(cls())), **common)
+    yield 'StackMRQ-StackPCC', StackMLRQuantifier(MLPCC(MLStackedClassifier(cls())), **common)
+    yield 'StackMRQ-StackACC', StackMLRQuantifier(MLACC(MLStackedClassifier(cls())), **common)
+    yield 'StackMRQ-StackPACC', StackMLRQuantifier(MLPACC(MLStackedClassifier(cls())), **common)
+    yield 'StackMRQ-StackCC-app', StackMLRQuantifier(MLCC(MLStackedClassifier(cls())), protocol='app', **common)
+    yield 'StackMRQ-StackPCC-app', StackMLRQuantifier(MLPCC(MLStackedClassifier(cls())), protocol='app', **common)
+    yield 'StackMRQ-StackACC-app', StackMLRQuantifier(MLACC(MLStackedClassifier(cls())), protocol='app', **common)
+    yield 'StackMRQ-StackPACC-app', StackMLRQuantifier(MLPACC(MLStackedClassifier(cls())), protocol='app', **common)
+    yield 'MLAdjustedC', MLadjustedCount(OneVsRestClassifier(cls()))
+    yield 'MLStackAdjustedC', MLadjustedCount(MLStackedClassifier(cls()))
+    # yield 'MLprobAdjustedC', MLprobAdjustedCount(OneVsRestClassifier(calibratedCls()))
+    # yield 'MLStackProbAdjustedC', MLprobAdjustedCount(MLStackedClassifier(calibratedCls()))
+
     # yield 'MRQ-ChainCC', MLRegressionQuantification(MLCC(ClassifierChain(cls())), **common)
     # yield 'MRQ-ChainPCC', MLRegressionQuantification(MLPCC(ClassifierChain(cls())), **common)
     # yield 'MRQ-ChainACC', MLRegressionQuantification(MLACC(ClassifierChain(cls())), **common)
@@ -82,10 +111,10 @@ def models():
     # yield 'LSP-ACC', MLACC(LabelSpacePartion(cls()))
     # yield 'TwinSVM-CC', MLCC(MLTwinSVM())
     # yield 'TwinSVM-ACC', MLACC(MLTwinSVM())
-    yield 'MLKNN-CC', MLCC(MLknn())
-    yield 'MLKNN-PCC', MLPCC(MLknn())
-    yield 'MLKNN-ACC', MLACC(MLknn())
-    yield 'MLKNN-PACC', MLPACC(MLknn())
+    # yield 'MLKNN-CC', MLCC(MLknn())
+    #yield 'MLKNN-PCC', MLPCC(MLknn())
+    # yield 'MLKNN-ACC', MLACC(MLknn())
+    #yield 'MLKNN-PACC', MLPACC(MLknn())
 
 
 def get_dataset(dataset_name, dopickle=True):

@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import StandardScaler
 from skmultilearn.adapt import MLTSVM
@@ -42,6 +42,25 @@ class MLStackedClassifier:  # aka Funnelling Monolingual
         P = self.base.predict_proba(X)
         P = self.norm.transform(P)
         return self.meta.predict_proba(P)
+
+
+class MLStackedRegressor:
+    def __init__(self, base_regressor=Ridge(normalize=True)):
+        self.base = deepcopy(base_regressor)
+        self.meta = deepcopy(base_regressor)
+
+    def fit(self, X, y):
+        assert y.ndim==2, 'the dataset does not seem to be multi-label'
+        self.base.fit(X, y)
+        R = self.base.predict(X)
+        # R = self.norm.fit_transform(R)
+        self.meta.fit(R, y)
+        return self
+
+    def predict(self, X):
+        R = self.base.predict(X)
+        # R = self.norm.transform(R)
+        return self.meta.predict(R)
 
 
 class LabelSpacePartion:

@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from quapy.data import LabelledCollection
 from quapy.functional import artificial_prevalence_sampling
 
+from skmultilearn.model_selection import iterative_train_test_split
 
 class MultilabelledCollection:
     def __init__(self, instances, labels):
@@ -67,10 +68,13 @@ class MultilabelledCollection:
         labels = self.labels[index]
         return MultilabelledCollection(documents, labels)
 
-    def train_test_split(self, train_prop=0.6, random_state=None):
-        #raise ValueError('use the scikit-multilearn implementation')
-        tr_docs, te_docs, tr_labels, te_labels = \
-            train_test_split(self.instances, self.labels, train_size=train_prop, random_state=random_state)
+    def train_test_split(self, train_prop=0.6, random_state=None, iterative=False):
+        if iterative:
+            tr_docs, tr_labels, te_docs, te_labels = \
+                iterative_train_test_split(self.instances, self.labels, test_size=1-train_prop)
+        else:
+            tr_docs, te_docs, tr_labels, te_labels = \
+                train_test_split(self.instances, self.labels, train_size=train_prop, random_state=random_state)
         return MultilabelledCollection(tr_docs, tr_labels), MultilabelledCollection(te_docs, te_labels)
 
     def artificial_sampling_generator(self, sample_size, category, n_prevalences=101, repeats=1):
@@ -97,6 +101,10 @@ class MultilabelledCollection:
     def genLabelledCollections(self):
         for c in self.classes_:
             yield self.asLabelledCollection(c)
+
+    # @property
+    # def label_cardinality(self):
+    #     return self.labels.sum()/len(self)
 
     @property
     def Xy(self):

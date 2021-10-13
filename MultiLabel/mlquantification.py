@@ -1,6 +1,8 @@
 import numpy as np
 from copy import deepcopy
 
+import sklearn.preprocessing
+from sklearn.ensemble import StackingRegressor
 from sklearn.metrics import confusion_matrix
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.preprocessing import StandardScaler
@@ -9,7 +11,7 @@ from sklearn.linear_model import LogisticRegression, Ridge, Lasso, LassoCV, Mult
     ElasticNet, MultiTaskElasticNetCV, MultiTaskElasticNet, LinearRegression, ARDRegression, BayesianRidge, SGDRegressor
 
 import quapy as qp
-from MultiLabel.mlclassification import MLStackedClassifier
+from MultiLabel.mlclassification import MLStackedClassifier, MLStackedRegressor
 from MultiLabel.mldata import MultilabelledCollection
 from method.aggregative import CC, ACC, PACC, AggregativeQuantifier
 from method.base import BaseQuantifier
@@ -166,13 +168,17 @@ class MLRegressionQuantification:
                  norm=True,
                  means=True,
                  stds=True):
-        assert regression in ['ridge', 'svr'], 'unknown regression model'
+
         assert protocol in ['npp', 'app'], 'unknown protocol'
         self.estimator = mlquantifier
-        if regression == 'ridge':
-            self.reg = Ridge(normalize=norm)
-        elif regression == 'svr':
-            self.reg = MultiOutputRegressor(LinearSVR())
+        if isinstance(regression, str):
+            assert regression in ['ridge', 'svr'], 'unknown regression model'
+            if regression == 'ridge':
+                self.reg = Ridge(normalize=norm)
+            elif regression == 'svr':
+                self.reg = MultiOutputRegressor(LinearSVR())
+        else:
+            self.reg = regression
         self.protocol = protocol
         # self.reg = MultiTaskLassoCV(normalize=norm)
         # self.reg = KernelRidge(kernel='rbf')
@@ -215,7 +221,7 @@ class MLRegressionQuantification:
         Xs, ys = [], []
         samples_mean, samples_std = [], []
         for sample in val.natural_sampling_generator(sample_size=self.sample_size, repeats=self.n_samples):
-            self._extract_features(self, sample, Xs, ys, samples_mean, samples_std)
+            self._extract_features(sample, Xs, ys, samples_mean, samples_std)
         return self._prepare_arrays(Xs, ys, samples_mean, samples_std)
 
 
@@ -227,7 +233,7 @@ class MLRegressionQuantification:
         repeats = max(self.n_samples // (ncats * nprevs), 1)
         for cat in self.classes_:
             for sample in val.artificial_sampling_generator(sample_size=self.sample_size, category=cat, n_prevalences=nprevs, repeats=repeats):
-                self._extract_features(self, sample, Xs, ys, samples_mean, samples_std)
+                self._extract_features(sample, Xs, ys, samples_mean, samples_std)
         return self._prepare_arrays(Xs, ys, samples_mean, samples_std)
 
     def fit(self, data:MultilabelledCollection):
@@ -259,4 +265,97 @@ class MLRegressionQuantification:
         return np.asarray([neg_prevs, adjusted]).T
 
 
-# class
+class StackMLRQuantifier:
+    def __init__(self,
+                 mlquantifier=MLNaiveQuantifier(CC(LinearSVC())),
+                 regression='ridge',
+                 protocol='npp',
+                 n_samples=500,
+                 sample_size=500,
+                 norm=True,
+                 means=True,
+                 stds=True):
+        if regression == 'ridge':
+            reg = MLStackedRegressor(Ridge(normalize=True))
+        elif regression == 'svr':
+            reg = MLStackedRegressor(MultiOutputRegressor(LinearSVR()))
+        else:
+            ValueError(f'unknown regressor {regression}')
+
+        self.base = MLRegressionQuantification(
+            mlquantifier=mlquantifier,
+            regression=reg,
+            protocol=protocol,
+            n_samples=n_samples,
+            sample_size=sample_size,
+            norm=norm,
+            means=means,
+            stds=stds)
+
+    def fit(self, data:MultilabelledCollection):
+        self.classes_ = data.classes_
+        self.base.fit(data)
+        return self
+
+    def quantify(self, instances):
+        return self.base.quantify(instances)
+
+
+class MLadjustedCount(MLAggregativeQuantifier):
+    def __init__(self, learner):
+        self.learner = learner
+
+    def preclassify(self, instances):
+        return self.learner.predict(instances)
+
+    def fit(self, data: MultilabelledCollection, train_prop=0.6):
+        self.classes_ = data.classes_
+        train, val = data.train_test_split(train_prop=train_prop)
+        self.learner.fit(*train.Xy)
+        val_predictions = self.preclassify(val.instances)
+        val_true = val.labels
+
+        N = len(val)
+        C = val_predictions.T.dot(val_true) / N  # join probabilities [[P(y1,\hat{y}1), P(y2,\hat{y}1)], ... ]
+        priorP = val_predictions.mean(axis=0).reshape(-1,1)  # priors [P(hat{y}1), P(hat{y}2), ...]
+        self.Pte_cond_estim_ = np.true_divide(C, priorP, where=priorP>0)  # cond probabilities [[P(y1|\hat{y}1), P(y2|\hat{y}1)], ... ]
+
+        return self
+
+    def aggregate(self, predictions):
+        P = sklearn.preprocessing.normalize(predictions, norm='l1')
+        correction = P.dot(self.Pte_cond_estim_)
+        adjusted = correction.mean(axis=0)
+        return np.asarray([1-adjusted, adjusted]).T
+
+
+class MLprobAdjustedCount(MLAggregativeQuantifier):
+    def __init__(self, learner):
+        self.learner = learner
+
+    def preclassify(self, instances):
+        return self.learner.predict_proba(instances)
+
+    def fit(self, data: MultilabelledCollection, train_prop=0.6):
+        self.classes_ = data.classes_
+        train, val = data.train_test_split(train_prop=train_prop)
+        self.learner.fit(*train.Xy)
+        val_predictions = self.preclassify(val.instances)
+        val_true = val.labels
+
+        N = len(val)
+
+        C = (val_predictions>0.5).T.dot(val_true) / N  # join probabilities [[P(y1,\hat{y}1), P(y2,\hat{y}1)], ... ]
+        # not sure...
+
+
+        priorP = val_predictions.mean(axis=0).reshape(-1,1)  # priors [P(hat{y}1), P(hat{y}2), ...]
+        self.Pte_cond_estim_ = np.true_divide(C, priorP, where=priorP>0)  # cond probabilities [[P(y1|\hat{y}1), P(y2|\hat{y}1)], ... ]
+
+        return self
+
+    def aggregate(self, predictions):
+        P = sklearn.preprocessing.normalize(predictions, norm='l1')
+        correction = P.dot(self.Pte_cond_estim_)
+        adjusted = correction.mean(axis=0)
+        return np.asarray([1-adjusted, adjusted]).T
