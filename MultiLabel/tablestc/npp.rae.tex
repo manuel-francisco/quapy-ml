@@ -1,0 +1,62 @@
+
+    \resizebox{\textwidth}{!}{%
+            \begin{tabular}{|c||c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|} \hline
+             & \side{reuters21578} & \side{jrcall} & \side{ohsumed} & \side{rcv1} & \side{Ave} \\\hline
+NaiveCC &  0.1794 \cellcolor{green!26} &  0.2125 \cellcolor{green!47} &  0.2523 \cellcolor{red!50} &  0.1269 \cellcolor{red!43}  &  0.1928 \cellcolor{green!4}\\\hline
+NaivePCC &  0.1505$^{\phantom{\ddag}}$ \cellcolor{green!36} &  0.2288$^{\dag\phantom{\dag}}$ \cellcolor{green!46} &  0.0919$^{\dag\phantom{\dag}}$ \cellcolor{green!46} &  0.0668$^{\phantom{\ddag}}$ \cellcolor{green!44}  &  0.1345 \cellcolor{green!39}\\\hline
+NaivePCCcal &  0.1204$^{\ddag}$ \cellcolor{green!46} &  0.2092$^{\phantom{\ddag}}$ \cellcolor{green!47} & \textbf{0.0863}$^{\phantom{\ddag}}$ \cellcolor{green!50} & \textbf{0.0632}$^{\phantom{\ddag}}$ \cellcolor{green!50}  &  0.1198 \cellcolor{green!47}\\\hline
+NaiveACC &  0.3004 \cellcolor{red!14} &  0.2692 \cellcolor{green!43} &  0.2071 \cellcolor{red!22} &  0.1060 \cellcolor{red!12}  &  0.2207 \cellcolor{red!11}\\\hline
+NaivePACC &  0.1467 \cellcolor{green!37} &  0.2373 \cellcolor{green!46} &  0.1340 \cellcolor{green!21} &  0.0800 \cellcolor{green!25}  &  0.1495 \cellcolor{green!30}\\\hline
+NaivePACCcal &  0.1303 \cellcolor{green!42} &  0.2232 \cellcolor{green!47} &  0.1307 \cellcolor{green!23} &  0.0767 \cellcolor{green!30}  &  0.1402 \cellcolor{green!35}\\\hline
+NaiveACCit &  0.3202 \cellcolor{red!20} &  0.2855 \cellcolor{green!42} &  0.2034 \cellcolor{red!20} &  0.1035 \cellcolor{red!8}  &  0.2281 \cellcolor{red!16}\\\hline
+NaivePACCit &  0.1474 \cellcolor{green!37} &  0.2283 \cellcolor{green!46} &  0.1330 \cellcolor{green!21} &  0.0797 \cellcolor{green!25}  &  0.1471 \cellcolor{green!31}\\\hline
+ChainCC &  0.1756 \cellcolor{green!27} &  0.2189 \cellcolor{green!47} &  0.2299 \cellcolor{red!36} &  0.1315 \cellcolor{red!50}  &  0.1890 \cellcolor{green!6}\\\hline
+ChainPCC &  0.1490 \cellcolor{green!36} &  0.2237 \cellcolor{green!46} &  0.0988 \cellcolor{green!42} &  0.0789 \cellcolor{green!26}  &  0.1376 \cellcolor{green!37}\\\hline
+ChainACC &  0.3437 \cellcolor{red!28} &  0.2819 \cellcolor{green!43} &  0.1988 \cellcolor{red!17} &  0.1056 \cellcolor{red!12}  &  0.2325 \cellcolor{red!18}\\\hline
+ChainPACC &  0.1607 \cellcolor{green!32} &  0.2279 \cellcolor{green!46} &  0.1336 \cellcolor{green!21} & --  & --\\\hline
+StackCC &  0.1117$^{\dag\phantom{\dag}}$ \cellcolor{green!49} & \textbf{0.1783}$^{\phantom{\ddag}}$ \cellcolor{green!50} &  0.1349$^{\phantom{\ddag}}$ \cellcolor{green!20} &  0.0900$^{\phantom{\ddag}}$ \cellcolor{green!10}  &  0.1287 \cellcolor{green!42}\\\hline
+StackPCC & \textbf{0.1088}$^{\phantom{\ddag}}$ \cellcolor{green!50} &  0.1971$^{\phantom{\ddag}}$ \cellcolor{green!48} &  0.0883$^{\dag\phantom{\dag}}$ \cellcolor{green!48} &  0.0694$^{\phantom{\ddag}}$ \cellcolor{green!40}  & \textbf{0.1159} \cellcolor{green!50}\\\hline
+StackPCCcal &  0.1114$^{\dag\phantom{\dag}}$ \cellcolor{green!49} &  0.2043$^{\phantom{\ddag}}$ \cellcolor{green!48} &  0.0920$^{\phantom{\ddag}}$ \cellcolor{green!46} &  0.0685$^{\phantom{\ddag}}$ \cellcolor{green!42}  &  0.1190$^{\ddag}$ \cellcolor{green!48}\\\hline
+StackACC &  0.1463 \cellcolor{green!37} &  0.2548 \cellcolor{green!44} &  0.1493 \cellcolor{green!12} &  0.0901 \cellcolor{green!10}  &  0.1601 \cellcolor{green!23}\\\hline
+StackPACC &  0.1288 \cellcolor{green!43} &  0.2364 \cellcolor{green!46} &  0.1318 \cellcolor{green!22} &  0.0797 \cellcolor{green!25}  &  0.1442 \cellcolor{green!33}\\\hline
+StackPACCcal &  0.1283 \cellcolor{green!43} &  0.2439 \cellcolor{green!45} &  0.1367 \cellcolor{green!19} & --  & --\\\hline
+StackACCit &  0.1416 \cellcolor{green!38} &  0.7550 \cellcolor{green!11} &  0.1544 \cellcolor{green!8} &  0.0903 \cellcolor{green!10}  &  0.2853 \cellcolor{red!50}\\\hline
+StackPACCit &  0.1284 \cellcolor{green!43} &  0.5908 \cellcolor{green!22} &  0.1333 \cellcolor{green!21} &  0.0804 \cellcolor{green!24}  &  0.2332 \cellcolor{red!19}\\\hline
+MRQ-CC &  0.1810 \cellcolor{green!25} &  0.3423 \cellcolor{green!39} &  0.1121 \cellcolor{green!34} &  0.0773 \cellcolor{green!29}  &  0.1782 \cellcolor{green!13}\\\hline
+MRQ-PCC &  0.1363 \cellcolor{green!40} &  0.2104 \cellcolor{green!47} &  0.0944 \cellcolor{green!45} &  0.0687 \cellcolor{green!41}  &  0.1275 \cellcolor{green!43}\\\hline
+MRQ-ACC &  0.2143 \cellcolor{green!14} &  0.3818 \cellcolor{green!36} &  0.1202 \cellcolor{green!29} &  0.0798 \cellcolor{green!25}  &  0.1990 \cellcolor{green!0}\\\hline
+MRQ-PACC &  0.1517$^{\phantom{\ddag}}$ \cellcolor{green!35} &  0.2822$^{\ddag}$ \cellcolor{green!43} &  0.0991$^{\phantom{\ddag}}$ \cellcolor{green!42} &  0.0699$^{\phantom{\ddag}}$ \cellcolor{green!40}  &  0.1507 \cellcolor{green!29}\\\hline
+MRQ-ACCit &  0.2087 \cellcolor{green!16} &  0.4083 \cellcolor{green!34} &  0.1238 \cellcolor{green!27} &  0.0794 \cellcolor{green!26}  &  0.2050 \cellcolor{red!2}\\\hline
+MRQ-PACCit &  0.1426$^{\phantom{\ddag}}$ \cellcolor{green!38} &  0.2782$^{\ddag}$ \cellcolor{green!43} &  0.0970$^{\phantom{\ddag}}$ \cellcolor{green!43} &  0.0700$^{\phantom{\ddag}}$ \cellcolor{green!39}  &  0.1469 \cellcolor{green!31}\\\hline
+StackMRQ-CC &  0.1782 \cellcolor{green!26} &  0.3128 \cellcolor{green!41} &  0.1130 \cellcolor{green!33} &  0.0788 \cellcolor{green!27}  &  0.1707 \cellcolor{green!17}\\\hline
+StackMRQ-PCC &  0.1375 \cellcolor{green!40} &  0.1979 \cellcolor{green!48} &  0.0936 \cellcolor{green!45} &  0.0685 \cellcolor{green!42}  &  0.1244$^{\ddag}$ \cellcolor{green!45}\\\hline
+StackMRQ-ACC &  0.2015 \cellcolor{green!18} &  0.3905 \cellcolor{green!35} &  0.1233 \cellcolor{green!27} &  0.0789 \cellcolor{green!27}  &  0.1985 \cellcolor{green!1}\\\hline
+StackMRQ-PACC &  0.1529$^{\phantom{\ddag}}$ \cellcolor{green!35} &  0.3002$^{\ddag}$ \cellcolor{green!41} &  0.0979$^{\phantom{\ddag}}$ \cellcolor{green!43} &  0.0694$^{\phantom{\ddag}}$ \cellcolor{green!40}  &  0.1551 \cellcolor{green!26}\\\hline
+MRQ-StackCC &  0.1292$^{\phantom{\ddag}}$ \cellcolor{green!43} &  0.3014$^{\dag\phantom{\dag}}$ \cellcolor{green!41} &  0.0994$^{\phantom{\ddag}}$ \cellcolor{green!42} &  0.0721$^{\phantom{\ddag}}$ \cellcolor{green!36}  &  0.1505 \cellcolor{green!29}\\\hline
+MRQ-StackPCC &  0.1156$^{\ddag}$ \cellcolor{green!47} &  0.2402$^{\ddag}$ \cellcolor{green!45} &  0.0943$^{\phantom{\ddag}}$ \cellcolor{green!45} &  0.0674$^{\phantom{\ddag}}$ \cellcolor{green!43}  &  0.1294 \cellcolor{green!42}\\\hline
+MRQ-StackACC &  0.1406$^{\phantom{\ddag}}$ \cellcolor{green!39} &  0.3181$^{\dag\phantom{\dag}}$ \cellcolor{green!40} &  0.1036$^{\phantom{\ddag}}$ \cellcolor{green!39} &  0.0727$^{\phantom{\ddag}}$ \cellcolor{green!36}  &  0.1588 \cellcolor{green!24}\\\hline
+MRQ-StackPACC &  0.1239$^{\phantom{\ddag}}$ \cellcolor{green!44} &  0.2957$^{\ddag}$ \cellcolor{green!42} &  0.0948$^{\phantom{\ddag}}$ \cellcolor{green!44} &  0.0690$^{\phantom{\ddag}}$ \cellcolor{green!41}  &  0.1459 \cellcolor{green!32}\\\hline
+StackMRQ-StackCC &  0.1223$^{\phantom{\ddag}}$ \cellcolor{green!45} &  0.2806$^{\ddag}$ \cellcolor{green!43} &  0.1006$^{\phantom{\ddag}}$ \cellcolor{green!41} &  0.0703$^{\phantom{\ddag}}$ \cellcolor{green!39}  &  0.1435 \cellcolor{green!33}\\\hline
+StackMRQ-StackPCC &  0.1241$^{\phantom{\ddag}}$ \cellcolor{green!44} &  0.2430$^{\dag\phantom{\dag}}$ \cellcolor{green!45} &  0.0931$^{\phantom{\ddag}}$ \cellcolor{green!45} &  0.0664$^{\phantom{\ddag}}$ \cellcolor{green!45}  &  0.1316 \cellcolor{green!40}\\\hline
+StackMRQ-StackACC &  0.1431 \cellcolor{green!38} &  0.3349 \cellcolor{green!39} &  0.1036 \cellcolor{green!39} &  0.0739 \cellcolor{green!34}  &  0.1639 \cellcolor{green!21}\\\hline
+StackMRQ-StackPACC &  0.1336$^{\phantom{\ddag}}$ \cellcolor{green!41} &  0.2930$^{\ddag}$ \cellcolor{green!42} &  0.0931$^{\phantom{\ddag}}$ \cellcolor{green!45} &  0.0671$^{\phantom{\ddag}}$ \cellcolor{green!44}  &  0.1467 \cellcolor{green!31}\\\hline
+MRQ-StackCC-app &  0.1356 \cellcolor{green!41} &  0.2716 \cellcolor{green!43} &  0.1304 \cellcolor{green!23} &  0.0819 \cellcolor{green!22}  &  0.1548 \cellcolor{green!27}\\\hline
+MRQ-StackPCC-app &  0.1277 \cellcolor{green!43} &  0.2366 \cellcolor{green!46} &  0.1202 \cellcolor{green!29} &  0.0768 \cellcolor{green!29}  &  0.1403 \cellcolor{green!35}\\\hline
+MRQ-StackACC-app &  0.1493 \cellcolor{green!36} &  0.3883 \cellcolor{green!35} &  0.1441 \cellcolor{green!15} &  0.0894 \cellcolor{green!11}  &  0.1928 \cellcolor{green!4}\\\hline
+MRQ-StackPACC-app &  0.1350 \cellcolor{green!41} &  0.2988 \cellcolor{green!41} &  0.1251 \cellcolor{green!26} &  0.0762 \cellcolor{green!30}  &  0.1588 \cellcolor{green!24}\\\hline
+StackMRQ-StackCC-app &  0.1498 \cellcolor{green!36} &  0.3203 \cellcolor{green!40} &  0.1330 \cellcolor{green!21} &  0.0808 \cellcolor{green!24}  &  0.1710 \cellcolor{green!17}\\\hline
+StackMRQ-StackPCC-app &  0.1305 \cellcolor{green!42} &  0.3314 \cellcolor{green!39} &  0.1183 \cellcolor{green!30} &  0.0759 \cellcolor{green!31}  &  0.1640 \cellcolor{green!21}\\\hline
+StackMRQ-StackACC-app &  0.1451 \cellcolor{green!37} &  0.3091 \cellcolor{green!41} &  0.1405 \cellcolor{green!17} &  0.0866 \cellcolor{green!15}  &  0.1703 \cellcolor{green!17}\\\hline
+StackMRQ-StackPACC-app &  0.1346 \cellcolor{green!41} &  0.3670 \cellcolor{green!37} &  0.1272 \cellcolor{green!25} &  0.0771 \cellcolor{green!29}  &  0.1765 \cellcolor{green!14}\\\hline
+LSP-CC &  0.1599 \cellcolor{green!32} &  0.2070 \cellcolor{green!48} &  0.2284 \cellcolor{red!35} & --  & --\\\hline
+LSP-ACC &  0.2004 \cellcolor{green!19} &  0.3050 \cellcolor{green!41} &  0.1906 \cellcolor{red!12} & --  & --\\\hline
+MLKNN-CC &  0.1459$^{\phantom{\ddag}}$ \cellcolor{green!37} &  0.1814$^{\ddag}$ \cellcolor{green!49} & -- & --  & --\\\hline
+MLKNN-ACC &  0.1753 \cellcolor{green!27} &  0.2447 \cellcolor{green!45} & -- & --  & --\\\hline
+MLAdjustedC &  0.2129 \cellcolor{green!15} &  0.2544 \cellcolor{green!44} &  0.2079 \cellcolor{red!23} &  0.1158 \cellcolor{red!26}  &  0.1977 \cellcolor{green!1}\\\hline
+MLStackAdjustedC &  0.1467 \cellcolor{green!37} &  0.2619 \cellcolor{green!44} &  0.1095 \cellcolor{green!36} &  0.1141 \cellcolor{red!24}  &  0.1581 \cellcolor{green!25}\\\hline
+MLprobAdjustedC &  0.4068 \cellcolor{red!50} &  1.3235 \cellcolor{red!26} &  0.1163 \cellcolor{green!31} & --  & --\\\hline
+MLStackProbAdjustedC &  0.4023 \cellcolor{red!48} &  1.6755 \cellcolor{red!50} &  0.1160 \cellcolor{green!32} & --  & --\\\hline
+
+        \end{tabular}%
+        }
+    

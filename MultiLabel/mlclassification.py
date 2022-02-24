@@ -10,7 +10,7 @@ from skmultilearn.ensemble import LabelSpacePartitioningClassifier
 from skmultilearn.problem_transform import LabelPowerset
 from skmultilearn.cluster import NetworkXLabelGraphClusterer, LabelCooccurrenceGraphBuilder
 
-from skmultilearn.embedding import SKLearnEmbedder, EmbeddingClassifier
+# from skmultilearn.embedding import SKLearnEmbedder, EmbeddingClassifier
 from sklearn.manifold import SpectralEmbedding
 from sklearn.ensemble import RandomForestRegressor
 from skmultilearn.adapt import MLkNN

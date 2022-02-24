@@ -1,0 +1,241 @@
+%% Submissions for peer-review must enable line-numbering 
+%% using the lineno option in the \documentclass command.
+%%
+%% Camera-ready submissions do not need line numbers, and
+%% should have this option removed.
+\documentclass[10pt,a4paper]{article}
+
+%% Please note that the line numbering option requires
+%% version 1.1 or newer of the wlpeerj.cls file, and
+%% the corresponding author info requires v1.2
+
+%\documentclass[fleqn,10pt,lineno]{wlpeerjmodified}
+
+% ---- Beginning of preamble -------
+% ---- Variables -------------------
+
+\newif\ifdraft
+\drafttrue
+
+% ---- Counters -------------------
+
+
+% ---- Packages --------------------
+
+%\usepackage[sort&compress]{natbib}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+%\usepackage{algorithm2e}
+\usepackage{array}
+%\usepackage{color}
+\usepackage{dcolumn}
+\usepackage[acronym]{glossaries}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{imakeidx}  
+\usepackage{latexsym}
+\usepackage{mfirstuc}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage{tabularx,booktabs}
+% \usepackage{theapa}
+\usepackage{url}
+%\usepackage[usenames]{xcolor}
+
+\usepackage[utf8]{inputenc}
+\usepackage{outlines}
+\usepackage{wasysym}
+
+\usepackage{etoolbox}
+\usepackage[table]{xcolor}
+
+% ---- Commands --------------------
+
+\newcommand{\dsum}{\displaystyle\sum}
+
+\newcommand{\aesucomment}[1]{\ifdraft{\leavevmode\color{red}{[AE]: {#1}}}\else{\vspace{0ex}}\fi}
+\newcommand{\afabcomment}[1]{\ifdraft{\leavevmode\color{purple}{[AF]: {#1}}}\else{\vspace{0ex}}\fi}
+\newcommand{\alexcomment}[1]{\ifdraft{\leavevmode\color{red}{[AM]: {#1}}}\else{\vspace{0ex}}\fi}
+\newcommand{\alescomment}[1]{\ifdraft{\leavevmode\color{red}{[AM]: {#1}}}\else{\vspace{0ex}}\fi}
+\newcommand{\fabsebcomment}[1]{\ifdraft{\leavevmode\color{red}{[FS]: {#1}}}\else{\vspace{0ex}}\fi}
+
+\newcommand{\todo}[1]{\ifdraft{\leavevmode\color{red}{(todo, {#1})}}\else{\vspace{0ex}}\fi}
+\newcommand{\revise}[1]{\ifdraft{\leavevmode\color{blue}{({#1} to revise})}\else{\vspace{0ex}}\fi}
+\newcommand{\done}[1]{\ifdraft{\leavevmode\color{blue}{(done, {#1})}}\else{\vspace{0ex}}\fi}
+
+\newcommand{\citedexcerpt}[2]{\ifdraft{\leavevmode\color{blue}{``{#1}''\cite{#2}}}\else{\vspace{0ex}}\fi}
+\newcommand{\blue}[1]{\ifdraft{\leavevmode\color{blue}{#1}}\else{\leavevmode\color{black}{#1}}\fi}
+
+\newcommand{\MLPE}{\mathrm{MLPE}}
+\newcommand{\CC}{\mathrm{CC}}
+\newcommand{\PCC}{\mathrm{PCC}}
+\newcommand{\ACC}{\mathrm{ACC}}
+\newcommand{\PACC}{\mathrm{PACC}}
+\newcommand{\RE}{\mathrm{RE}}
+
+\newcommand{\TP}{\mathrm{TP}}
+\newcommand{\TN}{\mathrm{TN}}
+\newcommand{\FP}{\mathrm{FP}}
+\newcommand{\FN}{\mathrm{FN}}
+\newcommand{\POS}{\mathrm{POS}}
+\newcommand{\NEG}{\mathrm{NEG}}
+
+\newcommand{\TPR}{\mathrm{TPR}}
+\newcommand{\FPR}{\mathrm{FPR}}
+\newcommand{\TNR}{\mathrm{TNR}}
+\newcommand{\FNR}{\mathrm{FNR}}
+
+\DeclareMathOperator{\bias}{B}
+\DeclareMathOperator{\aae}{AE}
+\DeclareMathOperator{\nae}{NAE}
+\DeclareMathOperator{\rae}{RAE}
+\DeclareMathOperator{\nrae}{NRAE}
+\DeclareMathOperator{\kld}{KLD}
+\DeclareMathOperator{\nkld}{NKLD}
+\DeclareMathOperator{\emd}{EMD}
+\DeclareMathOperator{\jsd}{JSD}
+\DeclareMathOperator{\hd}{HD}
+\DeclareMathOperator{\nhd}{NHD}
+\DeclareMathOperator{\pd}{PD}
+\DeclareMathOperator{\rpd}{RPD}
+\DeclareMathOperator{\se}{SE}
+\DeclareMathOperator{\nse}{NSE}
+\DeclareMathOperator{\cra}{CR}
+\DeclareMathOperator{\dra}{DR}
+\DeclareMathOperator{\dr}{DR}
+\DeclareMathOperator{\bcd}{BCD}
+\DeclareMathOperator{\nas}{NAS}%
+\DeclareMathOperator{\nss}{NSS}
+
+\newcommand{\gr}{\cellcolor[gray]{.7}}
+\newcommand{\side}[1]{\begin{sideways}{#1}\end{sideways}}
+\newcommand{\cside}[1]{\multicolumn{2}{c|}{\side{#1}}}
+
+% ---- Renewed commands ------------
+
+\renewcommand{\baselinestretch}{1.00}
+
+% ---- Theorems --------------------
+
+\newtheorem{revcomment}{Reviewer Comment \#}[section]
+\newtheorem{edscomment}{Editor Comment}[section]
+\newtheorem{answer}{Answer}[section]
+\newtheorem{axiom}{Axiom}[section]
+
+% ---- Column types ----------------
+
+\newcolumntype{.}{D{.}{.}{-1}}
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
+\newcolumntype{N}{@{}m{0pt}@{}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+
+% ---- Acronyms ----------------
+
+\newacronym{BQ}{BQ}{Binary quantification}
+\newacronym{SLQ}{SLQ}{Single-label quantification}
+\newacronym{MLQ}{MLQ}{Multi-label quantification}
+
+% ---- End of preamble -------------
+
+\title{Tweet Sentiment Quantification: \\ An Experimental
+Re-Evaluation}
+
+\author{Alejandro Moreo and Fabrizio Sebastiani}
+
+
+
+
+\begin{document}
+
+\flushbottom
+\maketitle
+\thispagestyle{empty}
+
+% --------------------------------------------------------------------
+
+
+
+\section{Results}
+\label{sec:results}
+
+
+
+\begin{table}[h]
+\tiny
+
+    \caption{npp}
+    \begin{center}
+    \resizebox{\textwidth}{!}{%
+        \input{npp.ae.tex}
+    }
+  \end{center}
+  \label{tab:npp}
+\end{table}
+
+\begin{table}[h]
+\tiny
+
+    \caption{app}
+    \begin{center}
+    \resizebox{\textwidth}{!}{%
+        \input{app.ae.tex}
+    }
+  \end{center}
+  \label{tab:app}
+\end{table}
+    
+%
+
+\begin{table}{b}
+\begin{tabular}{|c||c|c|c|c|}\hline
+name & |tr| & |te| & |F| & |C|\\\hline
+Corel5k & 4500 & 500 & 499 & 374\\\hline
+bibtex & 4880 & 2515 & 1836 & 159\\\hline
+birds & 322 & 323 & 260 & 19\\\hline
+delicious & 12920 & 3185 & 500 & 983\\\hline
+emotions & 391 & 202 & 72 & 6\\\hline
+enron & 1123 & 579 & 1001 & 53\\\hline
+genbase & 463 & 199 & 1186 & 27\\\hline
+mediamill & 30993 & 12914 & 120 & 101\\\hline
+medical & 333 & 645 & 1449 & 45\\\hline
+rcv1subset1 & 3000 & 3000 & 47236 & 101\\\hline
+rcv1subset2 & 3000 & 3000 & 47236 & 101\\\hline
+rcv1subset3 & 3000 & 3000 & 47236 & 101\\\hline
+rcv1subset4 & 3000 & 3000 & 47229 & 101\\\hline
+rcv1subset5 & 3000 & 3000 & 47235 & 101\\\hline
+scene & 1211 & 1196 & 294 & 6\\\hline
+tmc2007\_500 & 21519 & 7077 & 500 & 22\\\hline
+yeast & 1500 & 917 & 103 & 14\\\hline
+\end{tabular}
+\end{table}
+
+%
+%\begin{table}[h]
+%    \caption{Rank positions of the quantification methods in the AE
+%    experiments, and (between parentheses) the rank positions 
+%    obtained in the evaluation of~\cite{Gao:2016uq}.}
+%    \begin{center}
+%    \resizebox{\textwidth}{!}{%
+%        \input{../tables/tab_rank_ae.new}
+%    }
+%    \end{center}
+%    \label{tab:maeranks}
+%\end{table}
+%
+%
+
+% --------------------------------------------------------------------
+
+\section{Conclusions}
+\label{sec:conclusions}
+
+\noindent 
+
+
+
+\bibliography{Fabrizio}
+
+\end{document}

@@ -22,26 +22,24 @@ import sys
 import os
 import pickle
 
-models = [#'MLPE',
-    'NaiveCC', 'NaivePCC', 'NaivePCCcal', 'NaiveACC', 'NaivePACC', 'NaivePACCcal', 'NaiveACCit', 'NaivePACCit',
+models = ['MLPE',
+    'NaiveCC', #'NaivePCC', 'NaivePCCcal', 'NaiveACC', 'NaivePACC', 'NaivePACCcal', 'NaiveACCit', 'NaivePACCit',
     #'NaiveHDy', 'NaiveSLD',
-    'ChainCC', 'ChainPCC', 'ChainACC', 'ChainPACC',
-    'StackCC', 'StackPCC', 'StackPCCcal', 'StackACC', 'StackPACC', 'StackPACCcal', 'StackACCit', 'StackP'
-                                                                  'ACCit',
-    'MRQ-CC', 'MRQ-PCC', 'MRQ-ACC', 'MRQ-PACC',  'MRQ-ACCit', 'MRQ-PACCit',
-    'StackMRQ-CC', 'StackMRQ-PCC', 'StackMRQ-ACC', 'StackMRQ-PACC',
-    'MRQ-StackCC', 'MRQ-StackPCC', 'MRQ-StackACC', 'MRQ-StackPACC',
-    'StackMRQ-StackCC', 'StackMRQ-StackPCC', 'StackMRQ-StackACC', 'StackMRQ-StackPACC',
-    'MRQ-StackCC-app', 'MRQ-StackPCC-app', 'MRQ-StackACC-app', 'MRQ-StackPACC-app',
-    'StackMRQ-StackCC-app', 'StackMRQ-StackPCC-app', 'StackMRQ-StackACC-app', 'StackMRQ-StackPACC-app',
-    'LSP-CC', 'LSP-ACC', 'MLKNN-CC', 'MLKNN-ACC',
-    'MLAdjustedC', 'MLStackAdjustedC', 'MLprobAdjustedC', 'MLStackProbAdjustedC'
+    # 'ChainCC', 'ChainPCC', 'ChainACC', 'ChainPACC',
+    # 'StackCC', 'StackPCC', 'StackPCCcal', 'StackACC', 'StackPACC', 'StackPACCcal', 'StackACCit', 'StackP'
+    #                                                               'ACCit',
+    # 'MRQ-CC', 'MRQ-PCC', 'MRQ-ACC', 'MRQ-PACC',  'MRQ-ACCit', 'MRQ-PACCit',
+    # 'StackMRQ-CC', 'StackMRQ-PCC', 'StackMRQ-ACC', 'StackMRQ-PACC',
+    # 'MRQ-StackCC', 'MRQ-StackPCC', 'MRQ-StackACC', 'MRQ-StackPACC',
+    # 'StackMRQ-StackCC', 'StackMRQ-StackPCC', 'StackMRQ-StackACC', 'StackMRQ-StackPACC',
+    # 'MRQ-StackCC-app', 'MRQ-StackPCC-app', 'MRQ-StackACC-app', 'MRQ-StackPACC-app',
+    # 'StackMRQ-StackCC-app', 'StackMRQ-StackPCC-app', 'StackMRQ-StackACC-app', 'StackMRQ-StackPACC-app',
+    # 'LSP-CC', 'LSP-ACC', 'MLKNN-CC', 'MLKNN-ACC',
+    # 'MLAdjustedC', 'MLStackAdjustedC', 'MLprobAdjustedC', 'MLStackProbAdjustedC'
 ]
 
 # datasets = sorted(set([x[0] for x in available_data_sets().keys()]))
 datasets = TC_DATASETS
-
-
 
 
 def generate_table(path, protocol, error):
@@ -72,14 +70,14 @@ def generate_table(path, protocol, error):
             table.add(dataset, model, scores)
 
     save_table(table, path)
-    save_table(table.getRankTable(), path.replace('.tex','.rank.tex'))
+    save_table(table.getRankTable(), path.replace('.tex', '.rank.tex'))
 
 
 
 def save_table(table, path):
     tabular = """
     \\resizebox{\\textwidth}{!}{%
-            \\begin{tabular}{|c||""" + ('c|' * len(models)) + """} \hline
+            \\begin{tabular}{|c||""" + ('c|' * (len(datasets)+1)) + """} \hline
             """
     dataset_replace = {'tmc2007_500': 'tmc2007\_500', 'tmc2007_500-red': 'tmc2007\_500-red'}
     method_replace = {}
@@ -91,6 +89,7 @@ def save_table(table, path):
     """
     with open(path, 'wt') as foo:
         foo.write(tabular)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Experiments for multi-label quantification')

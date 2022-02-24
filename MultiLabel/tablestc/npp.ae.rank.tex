@@ -1,0 +1,62 @@
+
+    \resizebox{\textwidth}{!}{%
+            \begin{tabular}{|c||c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|} \hline
+             & \side{reuters21578} & \side{jrcall} & \side{ohsumed} & \side{rcv1} & \side{Ave} \\\hline
+NaiveCC &  48 \cellcolor{red!38} &  35 \cellcolor{red!14} &  52 \cellcolor{red!50} &  45 \cellcolor{red!47}  &  45 \cellcolor{red!45}\\\hline
+NaivePCC &  20 \cellcolor{green!14} &  6 \cellcolor{green!40} &  2 \cellcolor{green!48} &  4 \cellcolor{green!43}  &  8$^{\ddag}$ \cellcolor{green!34}\\\hline
+NaivePCCcal & \textbf{1} \cellcolor{green!50} & \textbf{1} \cellcolor{green!50} & \textbf{1} \cellcolor{green!50} & \textbf{1} \cellcolor{green!50}  & \textbf{1} \cellcolor{green!50}\\\hline
+NaiveACC &  52 \cellcolor{red!46} &  43 \cellcolor{red!29} &  48 \cellcolor{red!42} &  43 \cellcolor{red!43}  &  46 \cellcolor{red!48}\\\hline
+NaivePACC &  40 \cellcolor{red!23} &  37 \cellcolor{red!17} &  40 \cellcolor{red!26} &  26 \cellcolor{red!5}  &  36 \cellcolor{red!25}\\\hline
+NaivePACCcal &  16 \cellcolor{green!21} &  26 \cellcolor{green!2} &  36 \cellcolor{red!18} &  22 \cellcolor{green!3}  &  25 \cellcolor{red!2}\\\hline
+NaiveACCit &  53 \cellcolor{red!48} &  45 \cellcolor{red!33} &  47 \cellcolor{red!40} &  42 \cellcolor{red!41}  &  47 \cellcolor{red!49}\\\hline
+NaivePACCit &  37 \cellcolor{red!17} &  30 \cellcolor{red!4} &  37 \cellcolor{red!20} &  29 \cellcolor{red!12}  &  33 \cellcolor{red!20}\\\hline
+ChainCC &  47 \cellcolor{red!36} &  41 \cellcolor{red!25} &  50 \cellcolor{red!46} &  46 \cellcolor{red!50}  &  46 \cellcolor{red!47}\\\hline
+ChainPCC &  24 \cellcolor{green!6} &  8 \cellcolor{green!36} &  13 \cellcolor{green!26} &  36 \cellcolor{red!27}  &  20$^{\dag\phantom{\dag}}$ \cellcolor{green!8}\\\hline
+ChainACC &  54 \cellcolor{red!50} &  44 \cellcolor{red!31} &  46 \cellcolor{red!38} &  44 \cellcolor{red!45}  &  47 \cellcolor{red!50}\\\hline
+ChainPACC &  38 \cellcolor{red!19} &  31 \cellcolor{red!6} &  38 \cellcolor{red!22} & --  & --\\\hline
+StackCC &  7 \cellcolor{green!38} &  21 \cellcolor{green!12} &  42 \cellcolor{red!30} &  39 \cellcolor{red!34}  &  27$^{\dag\phantom{\dag}}$ \cellcolor{red!7}\\\hline
+StackPCC &  3 \cellcolor{green!46} &  4 \cellcolor{green!44} &  7 \cellcolor{green!38} &  14 \cellcolor{green!21}  &  7$^{\dag\phantom{\dag}}$ \cellcolor{green!36}\\\hline
+StackPCCcal &  2 \cellcolor{green!48} &  3 \cellcolor{green!46} &  15 \cellcolor{green!22} &  13 \cellcolor{green!23}  &  8$^{\dag\phantom{\dag}}$ \cellcolor{green!34}\\\hline
+StackACC &  31 \cellcolor{red!6} &  42 \cellcolor{red!27} &  43 \cellcolor{red!32} &  37 \cellcolor{red!30}  &  38 \cellcolor{red!30}\\\hline
+StackPACC &  19 \cellcolor{green!16} &  38 \cellcolor{red!19} &  34 \cellcolor{red!14} &  27 \cellcolor{red!7}  &  30 \cellcolor{red!11}\\\hline
+StackPACCcal &  10 \cellcolor{green!33} &  39 \cellcolor{red!21} &  41 \cellcolor{red!28} & --  & --\\\hline
+StackACCit &  32 \cellcolor{red!8} &  52 \cellcolor{red!46} &  44 \cellcolor{red!34} &  38 \cellcolor{red!32}  &  42 \cellcolor{red!38}\\\hline
+StackPACCit &  14 \cellcolor{green!25} &  51 \cellcolor{red!44} &  39 \cellcolor{red!24} &  31 \cellcolor{red!16}  &  34 \cellcolor{red!21}\\\hline
+MRQ-CC &  41 \cellcolor{red!25} &  22 \cellcolor{green!10} &  20 \cellcolor{green!12} &  23 \cellcolor{green!1}  &  26 \cellcolor{red!5}\\\hline
+MRQ-PCC &  15 \cellcolor{green!23} &  5 \cellcolor{green!42} &  8 \cellcolor{green!36} &  7 \cellcolor{green!36}  &  9$^{\dag\phantom{\dag}}$ \cellcolor{green!33}\\\hline
+MRQ-ACC &  45 \cellcolor{red!33} &  23 \cellcolor{green!8} &  22 \cellcolor{green!8} &  33 \cellcolor{red!21}  &  31 \cellcolor{red!14}\\\hline
+MRQ-PACC &  26 \cellcolor{green!2} &  12 \cellcolor{green!29} &  12 \cellcolor{green!28} &  12 \cellcolor{green!25}  &  16 \cellcolor{green!18}\\\hline
+MRQ-ACCit &  43 \cellcolor{red!29} &  28 \cellcolor{red!0} &  24 \cellcolor{green!4} &  30 \cellcolor{red!14}  &  31 \cellcolor{red!15}\\\hline
+MRQ-PACCit &  28 \cellcolor{red!0} &  7 \cellcolor{green!38} &  11 \cellcolor{green!30} &  10 \cellcolor{green!30}  &  14$^{\dag\phantom{\dag}}$ \cellcolor{green!21}\\\hline
+StackMRQ-CC &  39 \cellcolor{red!21} &  19 \cellcolor{green!16} &  21 \cellcolor{green!10} &  28 \cellcolor{red!9}  &  27 \cellcolor{red!5}\\\hline
+StackMRQ-PCC &  17 \cellcolor{green!19} &  2 \cellcolor{green!48} &  5 \cellcolor{green!42} &  3 \cellcolor{green!45}  &  7$^{\ddag}$ \cellcolor{green!37}\\\hline
+StackMRQ-ACC &  42 \cellcolor{red!27} &  25 \cellcolor{green!4} &  23 \cellcolor{green!6} &  25 \cellcolor{red!3}  &  29 \cellcolor{red!10}\\\hline
+StackMRQ-PACC &  25 \cellcolor{green!4} &  17 \cellcolor{green!19} &  10 \cellcolor{green!32} &  8 \cellcolor{green!34}  &  15$^{\dag\phantom{\dag}}$ \cellcolor{green!19}\\\hline
+MRQ-StackCC &  13 \cellcolor{green!27} &  15 \cellcolor{green!23} &  14 \cellcolor{green!24} &  16 \cellcolor{green!16}  &  14 \cellcolor{green!20}\\\hline
+MRQ-StackPCC &  4 \cellcolor{green!44} &  10 \cellcolor{green!33} &  4 \cellcolor{green!44} &  6 \cellcolor{green!38}  &  6$^{\dag\phantom{\dag}}$ \cellcolor{green!39}\\\hline
+MRQ-StackACC &  18 \cellcolor{green!17} &  14 \cellcolor{green!25} &  17 \cellcolor{green!18} &  15 \cellcolor{green!18}  &  16 \cellcolor{green!17}\\\hline
+MRQ-StackPACC &  6 \cellcolor{green!40} &  11 \cellcolor{green!31} &  9 \cellcolor{green!34} &  9 \cellcolor{green!32}  &  9 \cellcolor{green!33}\\\hline
+StackMRQ-StackCC &  8 \cellcolor{green!36} &  13 \cellcolor{green!27} &  16 \cellcolor{green!20} &  11 \cellcolor{green!27}  &  12 \cellcolor{green!26}\\\hline
+StackMRQ-StackPCC &  5 \cellcolor{green!42} &  9 \cellcolor{green!34} &  6 \cellcolor{green!40} &  2 \cellcolor{green!47}  &  6$^{\dag\phantom{\dag}}$ \cellcolor{green!40}\\\hline
+StackMRQ-StackACC &  22 \cellcolor{green!10} &  18 \cellcolor{green!17} &  18 \cellcolor{green!16} &  19 \cellcolor{green!9}  &  19 \cellcolor{green!10}\\\hline
+StackMRQ-StackPACC &  9 \cellcolor{green!34} &  16 \cellcolor{green!21} &  3 \cellcolor{green!46} &  5 \cellcolor{green!41}  &  8$^{\dag\phantom{\dag}}$ \cellcolor{green!34}\\\hline
+MRQ-StackCC-app &  21 \cellcolor{green!12} &  32 \cellcolor{red!8} &  31 \cellcolor{red!8} &  32 \cellcolor{red!18}  &  29 \cellcolor{red!10}\\\hline
+MRQ-StackPCC-app &  11 \cellcolor{green!31} &  24 \cellcolor{green!6} &  27 \cellcolor{red!0} &  20 \cellcolor{green!7}  &  20 \cellcolor{green!7}\\\hline
+MRQ-StackACC-app &  34 \cellcolor{red!12} &  50 \cellcolor{red!42} &  35 \cellcolor{red!16} &  35 \cellcolor{red!25}  &  38 \cellcolor{red!31}\\\hline
+MRQ-StackPACC-app &  23 \cellcolor{green!8} &  36 \cellcolor{red!16} &  29 \cellcolor{red!4} &  17 \cellcolor{green!14}  &  26 \cellcolor{red!4}\\\hline
+StackMRQ-StackCC-app &  29 \cellcolor{red!2} &  46 \cellcolor{red!34} &  32 \cellcolor{red!10} &  24 \cellcolor{red!1}  &  33 \cellcolor{red!19}\\\hline
+StackMRQ-StackPCC-app &  12 \cellcolor{green!29} &  49 \cellcolor{red!40} &  25 \cellcolor{green!2} &  18 \cellcolor{green!12}  &  26$^{\dag\phantom{\dag}}$ \cellcolor{red!4}\\\hline
+StackMRQ-StackACC-app &  33 \cellcolor{red!10} &  29 \cellcolor{red!2} &  33 \cellcolor{red!12} &  34 \cellcolor{red!23}  &  32 \cellcolor{red!17}\\\hline
+StackMRQ-StackPACC-app &  27 \cellcolor{green!0} &  48 \cellcolor{red!38} &  30 \cellcolor{red!6} &  21 \cellcolor{green!5}  &  32 \cellcolor{red!16}\\\hline
+LSP-CC &  44 \cellcolor{red!31} &  33 \cellcolor{red!10} &  51 \cellcolor{red!48} & --  & --\\\hline
+LSP-ACC &  46 \cellcolor{red!34} &  47 \cellcolor{red!36} &  45 \cellcolor{red!36} & --  & --\\\hline
+MLKNN-CC &  35 \cellcolor{red!14} &  20 \cellcolor{green!14} & -- & --  & --\\\hline
+MLKNN-ACC &  36 \cellcolor{red!16} &  34 \cellcolor{red!12} & -- & --  & --\\\hline
+MLAdjustedC &  49 \cellcolor{red!40} &  40 \cellcolor{red!23} &  49 \cellcolor{red!44} &  41 \cellcolor{red!38}  &  45 \cellcolor{red!45}\\\hline
+MLStackAdjustedC &  30 \cellcolor{red!4} &  27 \cellcolor{green!0} &  26 \cellcolor{green!0} &  40 \cellcolor{red!36}  &  31 \cellcolor{red!14}\\\hline
+MLprobAdjustedC &  50 \cellcolor{red!42} &  53 \cellcolor{red!48} &  28 \cellcolor{red!2} & --  & --\\\hline
+MLStackProbAdjustedC &  51 \cellcolor{red!44} &  54 \cellcolor{red!50} &  19 \cellcolor{green!14} & --  & --\\\hline
+
+        \end{tabular}%
+        }
+    

@@ -1,0 +1,291 @@
+%% Submissions for peer-review must enable line-numbering 
+%% using the lineno option in the \documentclass command.
+%%
+%% Camera-ready submissions do not need line numbers, and
+%% should have this option removed.
+\documentclass[10pt,a4paper]{article}
+
+%% Please note that the line numbering option requires
+%% version 1.1 or newer of the wlpeerj.cls file, and
+%% the corresponding author info requires v1.2
+
+%\documentclass[fleqn,10pt,lineno]{wlpeerjmodified}
+
+% ---- Beginning of preamble -------
+% ---- Variables -------------------
+
+\newif\ifdraft
+\drafttrue
+
+% ---- Counters -------------------
+
+
+% ---- Packages --------------------
+
+%\usepackage[sort&compress]{natbib}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+%\usepackage{algorithm2e}
+\usepackage{array}
+%\usepackage{color}
+\usepackage{dcolumn}
+\usepackage[acronym]{glossaries}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{imakeidx}  
+\usepackage{latexsym}
+\usepackage{mfirstuc}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage{tabularx,booktabs}
+% \usepackage{theapa}
+\usepackage{url}
+%\usepackage[usenames]{xcolor}
+
+\usepackage[utf8]{inputenc}
+\usepackage{outlines}
+\usepackage{wasysym}
+
+\usepackage{etoolbox}
+\usepackage[table]{xcolor}
+
+% ---- Commands --------------------
+
+\newcommand{\dsum}{\displaystyle\sum}
+
+\newcommand{\aesucomment}[1]{\ifdraft{\leavevmode\color{red}{[AE]: {#1}}}\else{\vspace{0ex}}\fi}
+\newcommand{\afabcomment}[1]{\ifdraft{\leavevmode\color{purple}{[AF]: {#1}}}\else{\vspace{0ex}}\fi}
+\newcommand{\alexcomment}[1]{\ifdraft{\leavevmode\color{red}{[AM]: {#1}}}\else{\vspace{0ex}}\fi}
+\newcommand{\alescomment}[1]{\ifdraft{\leavevmode\color{red}{[AM]: {#1}}}\else{\vspace{0ex}}\fi}
+\newcommand{\fabsebcomment}[1]{\ifdraft{\leavevmode\color{red}{[FS]: {#1}}}\else{\vspace{0ex}}\fi}
+
+\newcommand{\todo}[1]{\ifdraft{\leavevmode\color{red}{(todo, {#1})}}\else{\vspace{0ex}}\fi}
+\newcommand{\revise}[1]{\ifdraft{\leavevmode\color{blue}{({#1} to revise})}\else{\vspace{0ex}}\fi}
+\newcommand{\done}[1]{\ifdraft{\leavevmode\color{blue}{(done, {#1})}}\else{\vspace{0ex}}\fi}
+
+\newcommand{\citedexcerpt}[2]{\ifdraft{\leavevmode\color{blue}{``{#1}''\cite{#2}}}\else{\vspace{0ex}}\fi}
+\newcommand{\blue}[1]{\ifdraft{\leavevmode\color{blue}{#1}}\else{\leavevmode\color{black}{#1}}\fi}
+
+\newcommand{\MLPE}{\mathrm{MLPE}}
+\newcommand{\CC}{\mathrm{CC}}
+\newcommand{\PCC}{\mathrm{PCC}}
+\newcommand{\ACC}{\mathrm{ACC}}
+\newcommand{\PACC}{\mathrm{PACC}}
+\newcommand{\RE}{\mathrm{RE}}
+
+\newcommand{\TP}{\mathrm{TP}}
+\newcommand{\TN}{\mathrm{TN}}
+\newcommand{\FP}{\mathrm{FP}}
+\newcommand{\FN}{\mathrm{FN}}
+\newcommand{\POS}{\mathrm{POS}}
+\newcommand{\NEG}{\mathrm{NEG}}
+
+\newcommand{\TPR}{\mathrm{TPR}}
+\newcommand{\FPR}{\mathrm{FPR}}
+\newcommand{\TNR}{\mathrm{TNR}}
+\newcommand{\FNR}{\mathrm{FNR}}
+
+\DeclareMathOperator{\bias}{B}
+\DeclareMathOperator{\aae}{AE}
+\DeclareMathOperator{\nae}{NAE}
+\DeclareMathOperator{\rae}{RAE}
+\DeclareMathOperator{\nrae}{NRAE}
+\DeclareMathOperator{\kld}{KLD}
+\DeclareMathOperator{\nkld}{NKLD}
+\DeclareMathOperator{\emd}{EMD}
+\DeclareMathOperator{\jsd}{JSD}
+\DeclareMathOperator{\hd}{HD}
+\DeclareMathOperator{\nhd}{NHD}
+\DeclareMathOperator{\pd}{PD}
+\DeclareMathOperator{\rpd}{RPD}
+\DeclareMathOperator{\se}{SE}
+\DeclareMathOperator{\nse}{NSE}
+\DeclareMathOperator{\cra}{CR}
+\DeclareMathOperator{\dra}{DR}
+\DeclareMathOperator{\dr}{DR}
+\DeclareMathOperator{\bcd}{BCD}
+\DeclareMathOperator{\nas}{NAS}%
+\DeclareMathOperator{\nss}{NSS}
+
+\newcommand{\gr}{\cellcolor[gray]{.7}}
+\newcommand{\side}[1]{\begin{sideways}{#1}\end{sideways}}
+\newcommand{\cside}[1]{\multicolumn{2}{c|}{\side{#1}}}
+
+% ---- Renewed commands ------------
+
+\renewcommand{\baselinestretch}{1.00}
+
+% ---- Theorems --------------------
+
+\newtheorem{revcomment}{Reviewer Comment \#}[section]
+\newtheorem{edscomment}{Editor Comment}[section]
+\newtheorem{answer}{Answer}[section]
+\newtheorem{axiom}{Axiom}[section]
+
+% ---- Column types ----------------
+
+\newcolumntype{.}{D{.}{.}{-1}}
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
+\newcolumntype{N}{@{}m{0pt}@{}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+
+% ---- Acronyms ----------------
+
+\newacronym{BQ}{BQ}{Binary quantification}
+\newacronym{SLQ}{SLQ}{Single-label quantification}
+\newacronym{MLQ}{MLQ}{Multi-label quantification}
+
+% ---- End of preamble -------------
+
+\title{Tweet Sentiment Quantification: \\ An Experimental
+Re-Evaluation}
+
+\author{Alejandro Moreo and Fabrizio Sebastiani}
+
+
+
+
+\begin{document}
+
+\flushbottom
+%\maketitle
+\thispagestyle{empty}
+
+% --------------------------------------------------------------------
+
+
+
+\section{Results}
+\label{sec:results}
+
+\begin{table}[ht!]
+\begin{tabular}{|c||c|c|c|c|c|c|c|}\hline
+    name & $|tr|$ & $|te|$ & $|F|$ & $|C|$ & $p$-ave & $p$-min & $p$-max \\\hline
+reuters21578 & 9603 & 3299 & 8250 & 10 & 0.075 & 0.019 & 0.300\\\hline
+jrcall & 13137 & 7233 & 21109 & 10 & 0.048 & 0.032 & 0.088\\\hline
+ohsumed & 24061 & 10328 & 18238 & 10 & 0.124 & 0.074 & 0.280\\\hline
+rcv1 & 23149 & 781265 & 24816 & 10 & 0.172 & 0.067 & 0.444\\\hline
+\end{tabular}
+\end{table}
+
+
+\newpage
+
+\begin{table}[h!]
+\tiny
+    \caption{AE npp 10 categories}
+    \begin{center}
+        \input{npp.ae.tex}
+
+  \end{center}
+  \label{tab:npp:ae}
+\end{table}
+
+
+\begin{table}[h!]
+\tiny
+
+    \caption{RAE npp 10 categories}
+    \begin{center}
+
+        \input{npp.rae.tex}
+
+  \end{center}
+  \label{tab:npp:rae}
+\end{table}
+
+
+\newpage
+
+\begin{table}[h!]
+\tiny
+
+    \caption{AE app 10 categories}
+    \begin{center}
+
+        \input{app.ae.tex}
+
+  \end{center}
+  \label{tab:app:ae}
+\end{table}
+
+\begin{table}[h!]
+\tiny
+
+    \caption{RAE app 10 categories}
+    \begin{center}
+
+        \input{app.rae.tex}
+
+  \end{center}
+  \label{tab:app:rae}
+\end{table}
+    
+
+\begin{table}[h!]
+\tiny
+    \caption{Rank AE npp 10 categories}
+    \begin{center}
+        \input{npp.ae.rank.tex}
+
+  \end{center}
+  \label{tab:npp:ae:rank}
+\end{table}
+
+\begin{table}[h!]
+\tiny
+
+    \caption{Rank RAE npp 10 categories}
+    \begin{center}
+
+        \input{npp.rae.rank.tex}
+
+  \end{center}
+  \label{tab:npp:rae:rank}
+\end{table}
+
+\begin{table}[h!]
+\tiny
+
+    \caption{Rank AE app 10 categories}
+    \begin{center}
+
+        \input{app.ae.rank.tex}
+
+  \end{center}
+  \label{tab:app:ae:rank}
+\end{table}
+
+\begin{table}[h!]
+\tiny
+
+    \caption{Rank RAE app 10 categories}
+    \begin{center}
+
+        \input{app.rae.rank.tex}
+
+  \end{center}
+  \label{tab:app:rae:rank}
+\end{table}
+    
+%
+
+
+
+
+
+% --------------------------------------------------------------------
+
+%\section{Conclusions}
+%\label{sec:conclusions}
+
+%\noindent 
+
+
+
+\bibliography{Fabrizio}
+
+\end{document}
