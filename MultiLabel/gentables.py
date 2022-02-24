@@ -23,8 +23,9 @@ import os
 import pickle
 
 models = ['MLPE',
-    'NaiveCC', #'NaivePCC', 'NaivePCCcal', 'NaiveACC', 'NaivePACC', 'NaivePACCcal', 'NaiveACCit', 'NaivePACCit',
-    #'NaiveHDy', 'NaiveSLD',
+    'NaiveCC', 'NaivePCC', 'NaiveACC', 'NaivePACC', #'NaivePACCcal', 'NaiveACCit', 'NaivePACCit',
+    #'NaiveHDy',
+    'NaiveSLD',
     # 'ChainCC', 'ChainPCC', 'ChainACC', 'ChainPACC',
     # 'StackCC', 'StackPCC', 'StackPCCcal', 'StackACC', 'StackPACC', 'StackPACCcal', 'StackACCit', 'StackP'
     #                                                               'ACCit',

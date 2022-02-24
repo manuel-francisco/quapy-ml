@@ -348,7 +348,6 @@ class MLprobAdjustedCount(MLAggregativeQuantifier):
         C = (val_predictions>0.5).T.dot(val_true) / N  # join probabilities [[P(y1,\hat{y}1), P(y2,\hat{y}1)], ... ]
         # not sure...
 
-
         priorP = val_predictions.mean(axis=0).reshape(-1,1)  # priors [P(hat{y}1), P(hat{y}2), ...]
         self.Pte_cond_estim_ = np.true_divide(C, priorP, where=priorP>0)  # cond probabilities [[P(y1|\hat{y}1), P(y2|\hat{y}1)], ... ]
 
