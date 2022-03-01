@@ -11,13 +11,13 @@ from scipy.sparse import csr_matrix
 import quapy as qp
 from MultiLabel.mlclassification import MLStackedClassifier, LabelSpacePartion, MLTwinSVM, MLknn
 from MultiLabel.mldata import MultilabelledCollection
-from MultiLabel.mlquantification import MLCompositeCC, MLNaiveQuantifier, MLCC, MLPCC, MLRegressionQuantification, \
+from MultiLabel.mlquantification import MLNaiveQuantifier, MLCC, MLPCC, MLRegressionQuantification, \
     MLACC, \
     MLPACC, MLNaiveAggregativeQuantifier, MLMLPE, StackMLRQuantifier, MLadjustedCount, MLprobAdjustedCount
 from quapy.method.aggregative import PACC, CC, EMQ, PCC, ACC, HDy
 import numpy as np
-from data.dataset  import Dataset
-from mlevaluation import ml_natural_prevalence_prediction, ml_artificial_prevalence_prediction
+from .quapy.data.dataset  import Dataset
+from quapy.mlevaluation import ml_natural_prevalence_prediction, ml_artificial_prevalence_prediction
 import sys
 import os
 import pickle
@@ -25,7 +25,7 @@ import pickle
 
 def cls():
     # return LinearSVC()
-    return LogisticRegression(max_iter=2000, solver='lbfgs')
+    return LogisticRegression(max_iter=1000, solver='lbfgs')
 
 
 def calibratedCls():
@@ -34,11 +34,10 @@ def calibratedCls():
 # DEBUG=True
 
 # if DEBUG:
-sample_size = 1000
+sample_size = 100
 n_samples = 5000
 
-#SKMULTILEARN_ALL_DATASETS = sorted(set([x[0] for x in available_data_sets().keys()]))
-SKMULTILEARN_ALL_DATASETS = ['Corel5k', 'bibtex', 'birds', 'delicious', 'emotions', 'enron', 'genbase', 'mediamill', 'medical', 'rcv1subset1', 'rcv1subset2', 'rcv1subset3', 'rcv1subset4', 'rcv1subset5', 'scene', 'tmc2007_500', 'yeast'] #offline
+SKMULTILEARN_ALL_DATASETS = sorted(set([x[0] for x in available_data_sets().keys()]))
 SKMULTILEARN_RED_DATASETS = [x+'-red' for x in SKMULTILEARN_ALL_DATASETS]
 TC_DATASETS = ['reuters21578', 'jrcall', 'ohsumed', 'rcv1']
 
@@ -73,15 +72,6 @@ def models():
     # yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None))
     # yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None))
     # yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None))
-
-
-
-
-
-    yield 'CompositeCC', MLCompositeCC(MLStackedClassifier(cls()), MLStackedClassifier(cls()), MLStackedClassifier(cls()))
-
-
-
 
     #   -- Classifiers from scikit-multilearn
     # yield 'LSP-CC', MLCC(LabelSpacePartion(cls()))
@@ -189,7 +179,7 @@ def get_dataset(dataset_name, dopickle=True):
             # yte = yte[:, valid_categories]
 
     elif dataset_name in TC_DATASETS:
-        picklepath = '/home/manolo/Documents/multi-label quantification/QuaPyPrivate/pickle-data'
+        picklepath = '/home/moreo/word-class-embeddings/pickles'
         data = Dataset.load(dataset_name, pickle_path=f'{picklepath}/{dataset_name}.pickle')
         Xtr, Xte = data.vectorize()
         ytr = data.devel_labelmatrix.todense().getA()
@@ -198,9 +188,9 @@ def get_dataset(dataset_name, dopickle=True):
         # remove categories with < 50 training or test documents
         # to_keep = np.logical_and(ytr.sum(axis=0)>=50, yte.sum(axis=0)>=50)
         # keep the 10 most populated categories
-        #to_keep = np.argsort(ytr.sum(axis=0))[-10:]
-        #ytr = ytr[:, to_keep]
-        #yte = yte[:, to_keep]
+        to_keep = np.argsort(ytr.sum(axis=0))[-10:]
+        ytr = ytr[:, to_keep]
+        yte = yte[:, to_keep]
         print(f'num categories = {ytr.shape[1]}')
 
     else:

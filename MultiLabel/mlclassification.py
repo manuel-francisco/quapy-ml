@@ -8,7 +8,8 @@ from skmultilearn.adapt import MLTSVM
 
 from skmultilearn.ensemble import LabelSpacePartitioningClassifier
 from skmultilearn.problem_transform import LabelPowerset
-from skmultilearn.cluster import NetworkXLabelGraphClusterer, LabelCooccurrenceGraphBuilder
+from skmultilearn.cluster.networkx import NetworkXLabelGraphClusterer
+from skmultilearn.cluster.base import LabelCooccurrenceGraphBuilder
 
 # from skmultilearn.embedding import SKLearnEmbedder, EmbeddingClassifier
 from sklearn.manifold import SpectralEmbedding

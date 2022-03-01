@@ -10,11 +10,13 @@ from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.linear_model import LogisticRegression, Ridge, Lasso, LassoCV, MultiTaskLassoCV, LassoLars, LassoLarsCV, \
     ElasticNet, MultiTaskElasticNetCV, MultiTaskElasticNet, LinearRegression, ARDRegression, BayesianRidge, SGDRegressor
 
+from sklearn.feature_selection import chi2, SelectKBest
+
 import quapy as qp
 from MultiLabel.mlclassification import MLStackedClassifier, MLStackedRegressor
 from MultiLabel.mldata import MultilabelledCollection
-from method.aggregative import CC, ACC, PACC, AggregativeQuantifier
-from method.base import BaseQuantifier
+from quapy.method.aggregative import CC, ACC, PACC, AggregativeQuantifier
+from quapy.method.base import BaseQuantifier
 
 from abc import abstractmethod
 
@@ -53,6 +55,57 @@ class MLAggregativeQuantifier(MLQuantifier):
     def quantify(self, instances):
         predictions = self.preclassify(instances)
         return self.aggregate(predictions)
+
+
+def select_features(X, y):
+    feature_scores = []
+    for i in range(y.shape[1]):
+        skb = SelectKBest(chi2, k="all")
+        skb.fit(X, y[:, i])
+        feature_scores.append(list(skb.scores_))
+    
+    return np.argsort(-np.mean(feature_scores, axis=0))
+
+
+
+
+
+class MLCompositeAggregativeQuantifier(MLAggregativeQuantifier):
+    def __init__(self, mlcls1, mlcls2, mlcls3):
+        self.learner1 = mlcls1
+        self.learner2 = mlcls2
+        self.learner3 = mlcls3
+        self.selected = None
+    
+    def fit(self, data:MultilabelledCollection):
+        self.selected = select_features(*data.Xy)[:10]
+        X_selected = data.Xy[0][:, self.selected]
+        
+        self.learner1.fit(X_selected, data.Xy[1])
+        self.learner2.fit(*data.Xy)
+
+        p1 = self.learner1.predict(data.Xy[0][:, self.selected])
+        p2 = self.learner2.predict(data.Xy[0])
+        p = np.concatenate((p1, p2), axis=1)
+
+        self.learner3.fit(p, data.Xy[1])
+
+        return self
+
+
+class MLCompositeCC(MLCompositeAggregativeQuantifier):
+    def preclassify(self, instances):
+        p1 = self.learner1.predict(instances[:, self.selected])
+        p2 = self.learner2.predict(instances)
+        p = np.concatenate((p1, p2), axis=1)
+        return self.learner3.predict(p)
+    
+    def aggregate(self, predictions):
+        pos_prev = predictions.mean(axis=0)
+        neg_prev = 1 - pos_prev
+        return np.asarray([neg_prev, pos_prev]).T
+        
+
 
 
 class MLCC(MLAggregativeQuantifier):
