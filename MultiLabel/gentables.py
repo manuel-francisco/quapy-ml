@@ -14,7 +14,7 @@ from MultiLabel.mlquantification import MLNaiveQuantifier, MLCC, MLPCC, MLRegres
     MLACC, \
     MLPACC, MLNaiveAggregativeQuantifier
 from MultiLabel.tabular import Table
-from method.aggregative import PACC, CC, EMQ, PCC, ACC, HDy
+from quapy.method.aggregative import PACC, CC, EMQ, PCC, ACC, HDy
 import numpy as np
 from data.dataset  import Dataset
 from mlevaluation import ml_natural_prevalence_prediction, ml_artificial_prevalence_prediction, check_error_str
@@ -27,9 +27,12 @@ models = ['MLPE',
     #'NaiveHDy',
     'NaiveSLD',
     # 'ChainCC', 'ChainPCC', 'ChainACC', 'ChainPACC',
-    # 'StackCC', 'StackPCC', 'StackPCCcal', 'StackACC', 'StackPACC', 'StackPACCcal', 'StackACCit', 'StackP'
+    'StackCC', 
+    # 'StackPCC', 'StackPCCcal', 'StackACC', 'StackPACC', 'StackPACCcal', 'StackACCit', 'StackP'
     #                                                               'ACCit',
-    # 'MRQ-CC', 'MRQ-PCC', 'MRQ-ACC', 'MRQ-PACC',  'MRQ-ACCit', 'MRQ-PACCit',
+    'CompositeCC', 'SlicedCC', 'CMRQ-CC', 'CMRQ-StackCC',
+    'MRQ-CC', 
+    # 'MRQ-PCC', 'MRQ-ACC', 'MRQ-PACC',  'MRQ-ACCit', 'MRQ-PACCit',
     # 'StackMRQ-CC', 'StackMRQ-PCC', 'StackMRQ-ACC', 'StackMRQ-PACC',
     # 'MRQ-StackCC', 'MRQ-StackPCC', 'MRQ-StackACC', 'MRQ-StackPACC',
     # 'StackMRQ-StackCC', 'StackMRQ-StackPCC', 'StackMRQ-StackACC', 'StackMRQ-StackPACC',

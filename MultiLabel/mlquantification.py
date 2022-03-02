@@ -76,15 +76,29 @@ class MLCompositeAggregativeQuantifier(MLAggregativeQuantifier):
         self.learner2 = mlcls2
         self.learner3 = mlcls3
         self.selected = None
+        self.no_labels = 0
     
     def fit(self, data:MultilabelledCollection):
-        self.selected = select_features(*data.Xy)[:10]
-        X_selected = data.Xy[0][:, self.selected]
+        self.no_labels = data.Xy[1].shape[1]
+        corrs = np.corrcoef(data.Xy[1].T)
+        np.fill_diagonal(corrs, 0)
         
-        self.learner1.fit(X_selected, data.Xy[1])
+        selected = []
+        sel = np.argmax(corrs.sum(axis=0))
+        sel_aux = np.argmax(corrs[sel, :])
+        selected.append(sel)
+        selected.append(sel_aux)
+
+        while len(selected) < 10 and len(selected) < self.no_labels:
+            selected.append(np.argmax(corrs[selected, :].sum(axis=0)))
+        
+        self.selected = sorted(selected)
+        self.learner1.fit(data.Xy[0], data.Xy[1][:, self.selected])
         self.learner2.fit(*data.Xy)
 
-        p1 = self.learner1.predict(data.Xy[0][:, self.selected])
+        p1 = np.zeros((data.Xy[0].shape[0], self.no_labels))
+        p1_aux = self.learner1.predict(data.Xy[0])
+        p1[:, self.selected] = p1_aux
         p2 = self.learner2.predict(data.Xy[0])
         p = np.concatenate((p1, p2), axis=1)
 
@@ -95,8 +109,11 @@ class MLCompositeAggregativeQuantifier(MLAggregativeQuantifier):
 
 class MLCompositeCC(MLCompositeAggregativeQuantifier):
     def preclassify(self, instances):
-        p1 = self.learner1.predict(instances[:, self.selected])
+        p1 = np.zeros((instances.shape[0], self.no_labels))
+        p1_aux = self.learner1.predict(instances)
+        p1[:, self.selected] = p1_aux
         p2 = self.learner2.predict(instances)
+
         p = np.concatenate((p1, p2), axis=1)
         return self.learner3.predict(p)
     
@@ -104,7 +121,52 @@ class MLCompositeCC(MLCompositeAggregativeQuantifier):
         pos_prev = predictions.mean(axis=0)
         neg_prev = 1 - pos_prev
         return np.asarray([neg_prev, pos_prev]).T
+
+
+class MLSlicedAggregativeQuantifier(MLAggregativeQuantifier):
+    def __init__(self, mlcls1, mlcls2):
+        self.learner1 = mlcls1
+        self.learner2 = mlcls2
+        self.selected = None
+        self.not_selected = None
+        self.no_labels = 0
+    
+    def fit(self, data:MultilabelledCollection):
+        self.no_labels = data.Xy[1].shape[1]
+        corrs = np.corrcoef(data.Xy[1].T)
+        np.fill_diagonal(corrs, 0)
         
+        selected = []
+        sel = np.argmax(corrs.sum(axis=0))
+        sel_aux = np.argmax(corrs[sel, :])
+        selected.append(sel)
+        selected.append(sel_aux)
+
+        while len(selected) < 10 and len(selected) < self.no_labels:
+            selected.append(np.argmax(corrs[selected, :].sum(axis=0)))
+        
+        self.selected = sorted(selected)
+        self.not_selected = [i for i in range(self.no_labels) if i not in self.selected]
+        self.learner1.fit(data.Xy[0], data.Xy[1][:, self.selected])
+        self.learner2.fit(data.Xy[0], data.Xy[1][:, self.not_selected])
+
+        return self
+
+
+class MLSlicedCC(MLSlicedAggregativeQuantifier):
+    def preclassify(self, instances):
+        p = np.zeros((instances.shape[0], self.no_labels))
+        p1_aux = self.learner1.predict(instances)
+        p2_aux = self.learner2.predict(instances)
+        p[:, self.selected] = p1_aux
+        p[:, self.not_selected] = p2_aux
+        
+        return p
+    
+    def aggregate(self, predictions):
+        pos_prev = predictions.mean(axis=0)
+        neg_prev = 1 -  pos_prev
+        return np.asarray([neg_prev, pos_prev]).T
 
 
 
@@ -303,6 +365,131 @@ class MLRegressionQuantification:
 
     def quantify(self, instances):
         Xs = self.estimator.quantify(instances)[:,1].reshape(1,-1)
+        if self.means:
+            sample_mean = instances.mean(axis=0).getA()
+            Xs = np.hstack([Xs, sample_mean])
+        if self.stds:
+            sample_std = instances.todense().std(axis=0).getA()
+            Xs = np.hstack([Xs, sample_std])
+        # Xs = self.norm.transform(Xs)
+        Xs = self.reg.predict(Xs)
+        # Xs = self.norm.inverse_transform(Xs)
+        adjusted = np.clip(Xs, 0, 1)
+        adjusted = adjusted.flatten()
+        neg_prevs = 1-adjusted
+        return np.asarray([neg_prevs, adjusted]).T
+
+
+class CompositeMLRegressionQuantification(MLRegressionQuantification):
+    def __init__(self,
+                 mlquantifier=MLNaiveQuantifier(CC(LogisticRegression())),
+                 bquantifier=MLNaiveAggregativeQuantifier(CC(LogisticRegression())),
+                 regression='ridge',
+                 protocol='npp',
+                 n_samples=500,
+                 sample_size=500,
+                 norm=True,
+                 means=True,
+                 stds=True):
+
+        assert protocol in ['npp', 'app'], 'unknown protocol'
+        self.estimator = mlquantifier
+        self.binary_estimator = bquantifier
+        if isinstance(regression, str):
+            assert regression in ['ridge', 'svr'], 'unknown regression model'
+            if regression == 'ridge':
+                self.reg = Ridge(normalize=norm)
+            elif regression == 'svr':
+                self.reg = MultiOutputRegressor(LinearSVR())
+        else:
+            self.reg = regression
+        
+        self.protocol = protocol
+        self.regression = regression
+        self.n_samples = n_samples
+        self.sample_size = sample_size
+        self.means = means
+        self.stds = stds
+
+        self.selected = None
+        self.not_selected = None
+    
+    def _extract_features(self, sample, Xs, ys, samples_mean, samples_std):
+        ys.append(sample.prevalence()[:, 1])
+
+        Xs1 = self.estimator.quantify(sample.instances)[:, 1]
+        Xs2 = self.binary_estimator.quantify(sample.instances)[:, 1]
+        Xsi = np.zeros((1, self.no_labels))
+        Xsi[0, self.selected] = Xs1
+        Xsi[0, self.not_selected] = Xs2
+
+        adjusted = np.clip(Xsi, 0, 1)
+        adjusted = adjusted.flatten()
+        
+        Xs.append(adjusted)
+        if self.means:
+            samples_mean.append(sample.instances.mean(axis=0).getA().flatten())
+        if self.stds:
+            samples_std.append(sample.instances.todense().std(axis=0).getA().flatten())
+    
+    def fit(self, data:MultilabelledCollection):
+        self.classes_ = data.classes_
+
+
+        self.no_labels = data.Xy[1].shape[1]
+        corrs = np.corrcoef(data.Xy[1].T)
+        np.fill_diagonal(corrs, 0)
+        
+        selected = []
+        sel = np.argmax(corrs.sum(axis=0))
+        sel_aux = np.argmax(corrs[sel, :])
+        selected.append(sel)
+        selected.append(sel_aux)
+        corrs[sel, sel_aux] = 0
+        corrs[sel_aux, sel] = 0
+
+        while len(selected) < 10 and len(selected) < self.no_labels:
+            new_sel = np.argmax(corrs[selected, :].sum(axis=0))
+            assert not new_sel in selected, "already selected"
+            selected.append(new_sel)
+
+            for i in range(len(selected)):
+                for j in range(i, len(selected)):
+                    corrs[selected[i], selected[j]] = 0
+                    corrs[selected[j], selected[i]] = 0
+        
+        self.selected = sorted(selected)
+        self.not_selected = [i for i in range(self.no_labels) if i not in self.selected]
+
+        # p1 = np.zeros((data.Xy[0].shape[0], self.no_labels))
+        # p1_aux = self.learner1.predict(data.Xy[0])
+        # p1[:, self.selected] = p1_aux
+        # p2 = self.learner2.predict(data.Xy[0])
+        # p = np.concatenate((p1, p2), axis=1)
+
+
+        tr, val = data.train_test_split()
+        trX, trY = tr.Xy[0], tr.Xy[1]
+        trML = MultilabelledCollection(trX, trY[:, self.selected])
+        trB = MultilabelledCollection(trX, trY[:, self.not_selected])
+
+        self.estimator.fit(trML)
+        self.binary_estimator.fit(trB)
+        if self.protocol == 'npp':
+            Xs, ys = self.generate_samples_npp(val)
+        elif self.protocol == 'app':
+            Xs, ys = self.generate_samples_app(val)
+        # Xs = self.norm.fit_transform(Xs)
+        self.reg.fit(Xs, ys)
+        return self
+    
+    def quantify(self, instances):
+        Xs1 = self.estimator.quantify(instances)[:,1].reshape(1,-1)
+        Xs2 = self.binary_estimator.quantify(instances)[:,1].reshape(1,-1)
+        Xs = np.zeros((1, self.no_labels))
+        Xs[0, self.selected] = Xs1
+        Xs[0, self.not_selected] = Xs2
+
         if self.means:
             sample_mean = instances.mean(axis=0).getA()
             Xs = np.hstack([Xs, sample_mean])
