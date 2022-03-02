@@ -78,18 +78,9 @@ class MultilabelledCollection:
         return MultilabelledCollection(tr_docs, tr_labels), MultilabelledCollection(te_docs, te_labels)
 
     def artificial_sampling_generator(self, sample_size, category, n_prevalences=101, repeats=1, min_df=-1, allow_replacement=False):
-        # only categories with a number of positive instances >= min_df will be submitted to the APP exploration
-        # in case min_df == -1 (default), this check is not performed
-        # the exploration of prevalence values will not surpass the current prevalence of the class (i.e., sampling
-        # is only performed if it can be done without replacement) if allow_replacement=False (default)
-        dimensions = 2
-        cat_size = self.counts()[category]
-        max_reachable_prevalence = cat_size / sample_size
-        if min_df == -1 or cat_size >= min_df:
-            for request_prev in artificial_prevalence_sampling(dimensions, n_prevalences, repeats).flatten():
-                doable_with_replacement = request_prev == 0 or cat_size > 0
-                if (allow_replacement and doable_with_replacement) or request_prev <= max_reachable_prevalence:
-                    yield self.sampling(sample_size, category, request_prev)
+        # see artificial_sampling_index_generator
+        for index in self.artificial_sampling_index_generator(sample_size, category, n_prevalences, repeats, min_df, allow_replacement):
+            yield self.sampling_from_index(index)
 
     def artificial_sampling_index_generator(self, sample_size, category, n_prevalences=101, repeats=1, min_df=-1, allow_replacement=False):
         # only categories with a number of positive instances >= min_df will be submitted to the APP exploration
