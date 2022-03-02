@@ -13,7 +13,7 @@ from MultiLabel.mlclassification import MLStackedClassifier, LabelSpacePartion, 
 from MultiLabel.mldata import MultilabelledCollection
 from MultiLabel.mlquantification import MLCompositeCC, MLNaiveQuantifier, MLCC, MLPCC, MLRegressionQuantification, \
     MLACC, \
-    MLPACC, MLNaiveAggregativeQuantifier, MLMLPE, StackMLRQuantifier, MLadjustedCount, MLprobAdjustedCount
+    MLPACC, MLNaiveAggregativeQuantifier, MLMLPE, MLSlicedCC, StackMLRQuantifier, MLadjustedCount, MLprobAdjustedCount, CompositeMLRegressionQuantification, MLAggregativeQuantifier
 from quapy.method.aggregative import PACC, CC, EMQ, PCC, ACC, HDy
 import numpy as np
 from data.dataset  import Dataset
@@ -34,7 +34,7 @@ def calibratedCls():
 # DEBUG=True
 
 # if DEBUG:
-sample_size = 1000
+sample_size = 100
 n_samples = 5000
 
 picklepath = '../../word-class-embeddings/pickles'
@@ -51,11 +51,11 @@ def models():
     #yield 'MLPE', MLMLPE()
 
     # naives (Binary Classification + Binary Quantification)
-    #yield 'NaiveCC', MLNaiveAggregativeQuantifier(CC(cls()))
-    #yield 'NaivePCC', MLNaiveAggregativeQuantifier(PCC(cls()))
+    yield 'NaiveCC', MLNaiveAggregativeQuantifier(CC(cls()))
+    yield 'NaivePCC', MLNaiveAggregativeQuantifier(PCC(cls()))
     # yield 'NaivePCCcal', MLNaiveAggregativeQuantifier(PCC(calibratedCls()))
-    #yield 'NaiveACC', MLNaiveAggregativeQuantifier(ACC(cls()))
-    #yield 'NaivePACC', MLNaiveAggregativeQuantifier(PACC(cls()))
+    yield 'NaiveACC', MLNaiveAggregativeQuantifier(ACC(cls()))
+    yield 'NaivePACC', MLNaiveAggregativeQuantifier(PACC(cls()))
     # yield 'NaivePACCcal', MLNaiveAggregativeQuantifier(PACC(calibratedCls()))
     # yield 'NaiveACCit', MLNaiveAggregativeQuantifier(ACC(cls()))
     # yield 'NaivePACCit', MLNaiveAggregativeQuantifier(PACC(cls()))
@@ -64,24 +64,17 @@ def models():
 
     # Multi-label Classification + Binary Quantification
     yield 'StackCC', MLCC(MLStackedClassifier(cls()))
-    # yield 'StackPCC', MLPCC(MLStackedClassifier(cls()))
+    yield 'StackPCC', MLPCC(MLStackedClassifier(cls()))
     # yield 'StackPCCcal', MLPCC(MLStackedClassifier(calibratedCls()))
-    # yield 'StackACC', MLACC(MLStackedClassifier(cls()))
-    # yield 'StackPACC', MLPACC(MLStackedClassifier(cls()))
+    yield 'StackACC', MLACC(MLStackedClassifier(cls()))
+    yield 'StackPACC', MLPACC(MLStackedClassifier(cls()))
     # yield 'StackPACCcal', MLPACC(MLStackedClassifier(calibratedCls()))
     # yield 'StackACCit', MLACC(MLStackedClassifier(cls()))
     # yield 'StackPACCit', MLPACC(MLStackedClassifier(cls()))
-    #yield 'ChainCC', MLCC(ClassifierChain(cls(), cv=None))
-    # yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None))
-    # yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None))
-    # yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None))
-
-
-
-
-
-    #yield 'CompositeCC', MLCompositeCC(MLStackedClassifier(cls()), MLStackedClassifier(cls()), MLStackedClassifier(cls()))
-
+    yield 'ChainCC', MLCC(ClassifierChain(cls(), cv=None))
+    yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None))
+    yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None))
+    yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None))
 
 
 
@@ -96,28 +89,40 @@ def models():
     # yield 'MLKNN-PACC', MLPACC(MLknn())
 
     # Binary Classification + Multi-label Quantification
-    #common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
-    #yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
-    # yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
-    # yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
-    # yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
+    common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
+    yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
+    yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
+    yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
+    yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
     # yield 'MRQ-ACCit', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
     # yield 'MRQ-PACCit', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
 
     # Multi-label Classification + Multi-label Quantification
-    # yield 'MRQ-StackCC', MLRegressionQuantification(MLCC(MLStackedClassifier(cls())), **common)
-    # yield 'MRQ-StackPCC', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), **common)
-    # yield 'MRQ-StackACC', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), **common)
-    # yield 'MRQ-StackPACC', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), **common)
+    yield 'MRQ-StackCC', MLRegressionQuantification(MLCC(MLStackedClassifier(cls())), **common)
+    yield 'MRQ-StackPCC', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), **common)
+    yield 'MRQ-StackACC', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), **common)
+    yield 'MRQ-StackPACC', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), **common)
     # yield 'MRQ-StackCC-app', MLRegressionQuantification(MLCC(MLStackedClassifier(cls())), protocol='app', **common)
     # yield 'MRQ-StackPCC-app', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), protocol='app', **common)
     # yield 'MRQ-StackACC-app', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), protocol='app', **common)
     # yield 'MRQ-StackPACC-app', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), protocol='app', **common)
-    # yield 'MRQ-ChainCC', MLRegressionQuantification(MLCC(ClassifierChain(cls())), **common)
-    # yield 'MRQ-ChainPCC', MLRegressionQuantification(MLPCC(ClassifierChain(cls())), **common)
-    # yield 'MRQ-ChainACC', MLRegressionQuantification(MLACC(ClassifierChain(cls())), **common)
-    # yield 'MRQ-ChainPACC', MLRegressionQuantification(MLPACC(ClassifierChain(cls())), **common)
+    yield 'MRQ-ChainCC', MLRegressionQuantification(MLCC(ClassifierChain(cls())), **common)
+    yield 'MRQ-ChainPCC', MLRegressionQuantification(MLPCC(ClassifierChain(cls())), **common)
+    yield 'MRQ-ChainACC', MLRegressionQuantification(MLACC(ClassifierChain(cls())), **common)
+    yield 'MRQ-ChainPACC', MLRegressionQuantification(MLPACC(ClassifierChain(cls())), **common)
 
+    
+    
+    # MLC + BQ
+    yield 'CMRQ-CC', CompositeMLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
+    yield 'CMRQ-PCC', CompositeMLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
+    yield 'CMRQ-ACC', CompositeMLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
+    yield 'CMRQ-StackCC', CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), **common)
+    yield 'CMRQ-StackPCC', CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), **common)
+    yield 'CMRQ-StackACC', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), **common)
+    yield 'CMRQ-StackPACC', CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), **common)
+
+    
     # Chaos
     # yield 'StackMRQ-CC', StackMLRQuantifier(MLNaiveQuantifier(CC(cls())), **common)
     # yield 'StackMRQ-PCC', StackMLRQuantifier(MLNaiveQuantifier(PCC(cls())), **common)
@@ -184,11 +189,11 @@ def get_dataset(dataset_name, dopickle=True):
                 selected = np.asarray(sorted(selected))
                 ytr = ytr[:,selected]
                 yte = yte[:, selected]
-        # else:
+        else:
             # remove categories without positives in the training or test splits
-            # valid_categories = np.logical_and(ytr.sum(axis=0)>5, yte.sum(axis=0)>5)
-            # ytr = ytr[:, valid_categories]
-            # yte = yte[:, valid_categories]
+            valid_categories = np.logical_and(ytr.sum(axis=0)>5, yte.sum(axis=0)>5)
+            ytr = ytr[:, valid_categories]
+            yte = yte[:, valid_categories]
 
     elif dataset_name in TC_DATASETS:
         data = Dataset.load(dataset_name, pickle_path=f'{picklepath}/{dataset_name}.pickle')
@@ -196,12 +201,12 @@ def get_dataset(dataset_name, dopickle=True):
         ytr = data.devel_labelmatrix.todense().getA()
         yte = data.test_labelmatrix.todense().getA()
 
-        # remove categories with < 50 training or test documents
-        # to_keep = np.logical_and(ytr.sum(axis=0)>=50, yte.sum(axis=0)>=50)
+        # remove categories with < 20 training or test documents
+        to_keep = np.logical_and(ytr.sum(axis=0)>=20, yte.sum(axis=0)>=20)
         # keep the 10 most populated categories
-        #to_keep = np.argsort(ytr.sum(axis=0))[-10:]
-        #ytr = ytr[:, to_keep]
-        #yte = yte[:, to_keep]
+        # to_keep = np.argsort(ytr.sum(axis=0))[-10:]
+        ytr = ytr[:, to_keep]
+        yte = yte[:, to_keep]
         print(f'num categories = {ytr.shape[1]}')
 
     else:
