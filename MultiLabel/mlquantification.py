@@ -285,7 +285,8 @@ class MLRegressionQuantification:
         nprevs  = 21
         repeats = max(self.n_samples // (ncats * nprevs), 1)
         for cat in self.classes_:
-            for sample in val.artificial_sampling_generator(sample_size=self.sample_size, category=cat, n_prevalences=nprevs, repeats=repeats):
+            for sample in val.artificial_sampling_generator(
+                    sample_size=self.sample_size, category=cat, n_prevalences=nprevs, repeats=repeats, min_df=5):
                 self._extract_features(sample, Xs, ys, samples_mean, samples_std)
         return self._prepare_arrays(Xs, ys, samples_mean, samples_std)
 

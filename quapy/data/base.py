@@ -64,8 +64,10 @@ class LabelledCollection:
             return np.random.choice(len(self), size, replace=False)
         if len(prevs) == self.n_classes - 1:
             prevs = prevs + (1 - sum(prevs),)
-        assert len(prevs) == self.n_classes, 'unexpected number of prevalences'
-        assert sum(prevs) == 1, f'prevalences ({prevs}) wrong range (sum={sum(prevs)})'
+        assert len(prevs) == self.n_classes, \
+            f'unexpected number of prevalences, found {len(prevs)}, expected {self.n_classes}'
+        assert sum(prevs) == 1, \
+            f'prevalences ({prevs}) wrong range (sum={sum(prevs)})'
 
         taken = 0
         indexes_sample = []

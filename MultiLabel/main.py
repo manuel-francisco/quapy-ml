@@ -37,28 +37,30 @@ def calibratedCls():
 sample_size = 1000
 n_samples = 5000
 
+picklepath = '../../word-class-embeddings/pickles'
+
 #SKMULTILEARN_ALL_DATASETS = sorted(set([x[0] for x in available_data_sets().keys()]))
 SKMULTILEARN_ALL_DATASETS = ['Corel5k', 'bibtex', 'birds', 'delicious', 'emotions', 'enron', 'genbase', 'mediamill', 'medical', 'rcv1subset1', 'rcv1subset2', 'rcv1subset3', 'rcv1subset4', 'rcv1subset5', 'scene', 'tmc2007_500', 'yeast'] #offline
 SKMULTILEARN_RED_DATASETS = [x+'-red' for x in SKMULTILEARN_ALL_DATASETS]
 TC_DATASETS = ['reuters21578', 'jrcall', 'ohsumed', 'rcv1']
 
-DATASETS = TC_DATASETS
+DATASETS = ['reuters21578']
 
 
 def models():
-    yield 'MLPE', MLMLPE()
+    #yield 'MLPE', MLMLPE()
 
     # naives (Binary Classification + Binary Quantification)
-    yield 'NaiveCC', MLNaiveAggregativeQuantifier(CC(cls()))
-    yield 'NaivePCC', MLNaiveAggregativeQuantifier(PCC(cls()))
+    #yield 'NaiveCC', MLNaiveAggregativeQuantifier(CC(cls()))
+    #yield 'NaivePCC', MLNaiveAggregativeQuantifier(PCC(cls()))
     # yield 'NaivePCCcal', MLNaiveAggregativeQuantifier(PCC(calibratedCls()))
-    yield 'NaiveACC', MLNaiveAggregativeQuantifier(ACC(cls()))
-    yield 'NaivePACC', MLNaiveAggregativeQuantifier(PACC(cls()))
+    #yield 'NaiveACC', MLNaiveAggregativeQuantifier(ACC(cls()))
+    #yield 'NaivePACC', MLNaiveAggregativeQuantifier(PACC(cls()))
     # yield 'NaivePACCcal', MLNaiveAggregativeQuantifier(PACC(calibratedCls()))
     # yield 'NaiveACCit', MLNaiveAggregativeQuantifier(ACC(cls()))
     # yield 'NaivePACCit', MLNaiveAggregativeQuantifier(PACC(cls()))
     # yield 'NaiveHDy', MLNaiveAggregativeQuantifier(HDy(cls()))
-    yield 'NaiveSLD', MLNaiveAggregativeQuantifier(EMQ(calibratedCls()))
+    #yield 'NaiveSLD', MLNaiveAggregativeQuantifier(EMQ(calibratedCls()))
 
     # Multi-label Classification + Binary Quantification
     yield 'StackCC', MLCC(MLStackedClassifier(cls()))
@@ -69,7 +71,7 @@ def models():
     # yield 'StackPACCcal', MLPACC(MLStackedClassifier(calibratedCls()))
     # yield 'StackACCit', MLACC(MLStackedClassifier(cls()))
     # yield 'StackPACCit', MLPACC(MLStackedClassifier(cls()))
-    yield 'ChainCC', MLCC(ClassifierChain(cls(), cv=None))
+    #yield 'ChainCC', MLCC(ClassifierChain(cls(), cv=None))
     # yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None))
     # yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None))
     # yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None))
@@ -78,7 +80,7 @@ def models():
 
 
 
-    yield 'CompositeCC', MLCompositeCC(MLStackedClassifier(cls()), MLStackedClassifier(cls()), MLStackedClassifier(cls()))
+    #yield 'CompositeCC', MLCompositeCC(MLStackedClassifier(cls()), MLStackedClassifier(cls()), MLStackedClassifier(cls()))
 
 
 
@@ -94,8 +96,8 @@ def models():
     # yield 'MLKNN-PACC', MLPACC(MLknn())
 
     # Binary Classification + Multi-label Quantification
-    common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
-    yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
+    #common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
+    #yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
     # yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
     # yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
     # yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
@@ -189,7 +191,6 @@ def get_dataset(dataset_name, dopickle=True):
             # yte = yte[:, valid_categories]
 
     elif dataset_name in TC_DATASETS:
-        picklepath = '/home/manolo/Documents/multi-label quantification/QuaPyPrivate/pickle-data'
         data = Dataset.load(dataset_name, pickle_path=f'{picklepath}/{dataset_name}.pickle')
         Xtr, Xte = data.vectorize()
         ytr = data.devel_labelmatrix.todense().getA()

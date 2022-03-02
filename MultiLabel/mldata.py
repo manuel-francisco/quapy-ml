@@ -49,7 +49,7 @@ class MultilabelledCollection:
     def sampling_multi_index(self, size, cat, prev=None):
         if prev is None:  # no prevalence was indicated; returns an index for uniform sampling
             return np.random.choice(len(self), size, replace=size > len(self))
-        aux = LabelledCollection(self.__gen_index(), self.labels[:, cat])
+        aux = LabelledCollection(self.__gen_index(), self.labels[:, cat], classes_=[0,1])
         return aux.sampling_index(size, *[1-prev, prev])
 
     def uniform_sampling_multi_index(self, size):
@@ -77,15 +77,33 @@ class MultilabelledCollection:
                 train_test_split(self.instances, self.labels, train_size=train_prop, random_state=random_state)
         return MultilabelledCollection(tr_docs, tr_labels), MultilabelledCollection(te_docs, te_labels)
 
-    def artificial_sampling_generator(self, sample_size, category, n_prevalences=101, repeats=1):
+    def artificial_sampling_generator(self, sample_size, category, n_prevalences=101, repeats=1, min_df=-1, allow_replacement=False):
+        # only categories with a number of positive instances >= min_df will be submitted to the APP exploration
+        # in case min_df == -1 (default), this check is not performed
+        # the exploration of prevalence values will not surpass the current prevalence of the class (i.e., sampling
+        # is only performed if it can be done without replacement) if allow_replacement=False (default)
         dimensions = 2
-        for prevs in artificial_prevalence_sampling(dimensions, n_prevalences, repeats).flatten():
-            yield self.sampling(sample_size, category, prevs)
+        cat_size = self.counts()[category]
+        max_reachable_prevalence = cat_size / sample_size
+        if min_df == -1 or cat_size >= min_df:
+            for request_prev in artificial_prevalence_sampling(dimensions, n_prevalences, repeats).flatten():
+                doable_with_replacement = request_prev == 0 or cat_size > 0
+                if (allow_replacement and doable_with_replacement) or request_prev <= max_reachable_prevalence:
+                    yield self.sampling(sample_size, category, request_prev)
 
-    def artificial_sampling_index_generator(self, sample_size, category, n_prevalences=101, repeats=1):
+    def artificial_sampling_index_generator(self, sample_size, category, n_prevalences=101, repeats=1, min_df=-1, allow_replacement=False):
+        # only categories with a number of positive instances >= min_df will be submitted to the APP exploration
+        # in case min_df == -1 (default), this check is not performed
+        # the exploration of prevalence values will not surpass the current prevalence of the class (i.e., sampling
+        # is only performed if it can be done without replacement) if allow_replacement=False (default)
         dimensions = 2
-        for prevs in artificial_prevalence_sampling(dimensions, n_prevalences, repeats).flatten():
-            yield self.sampling_multi_index(sample_size, category, prevs)
+        cat_size = self.counts()[category]
+        max_reachable_prevalence = cat_size / sample_size
+        if min_df == -1 or cat_size >= min_df:
+            for request_prev in artificial_prevalence_sampling(dimensions, n_prevalences, repeats).flatten():
+                doable_with_replacement = request_prev == 0 or cat_size > 0
+                if (allow_replacement and doable_with_replacement) or request_prev <= max_reachable_prevalence:
+                    yield self.sampling_multi_index(sample_size, category, request_prev)
 
     def natural_sampling_generator(self, sample_size, repeats=100):
         for _ in range(repeats):

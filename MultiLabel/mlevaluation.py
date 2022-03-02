@@ -67,16 +67,18 @@ def ml_artificial_prevalence_prediction(model,
     nested_test_indexes = []
     with qp.util.temp_seed(random_seed):
         for cat in test.classes_:
-            nested_test_indexes.append(list(test.artificial_sampling_index_generator(sample_size=sample_size,
-                                                                              category=cat,
-                                                                              n_prevalences=n_prevalences,
-                                                                              repeats=repeats)))
+            indexes = list(test.artificial_sampling_index_generator(
+                sample_size=sample_size, category=cat, n_prevalences=n_prevalences, repeats=repeats, min_df=5)
+            )
+            if indexes:
+                nested_test_indexes.append(indexes)
     def _predict_batch(test_indexes):
         return _ml_prevalence_predictions(model, test, test_indexes)
 
     predictions = qp.util.parallel(_predict_batch, nested_test_indexes, n_jobs=-1)
-    true_prevs = list(itertools.chain.from_iterable(trues for trues, estims in predictions))
-    estim_prevs = list(itertools.chain.from_iterable(estims for trues, estims in predictions))
+    trues, estims = zip(*predictions)
+    true_prevs = list(itertools.chain.from_iterable(trues))
+    estim_prevs = list(itertools.chain.from_iterable(estims))
     return true_prevs, estim_prevs
 
 
