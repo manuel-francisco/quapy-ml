@@ -2,7 +2,6 @@ import argparse
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import LogisticRegression
 import itertools
-
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain
 from tqdm import tqdm
@@ -13,7 +12,8 @@ from MultiLabel.mlclassification import MLStackedClassifier, LabelSpacePartion, 
 from MultiLabel.mldata import MultilabelledCollection
 from MultiLabel.mlquantification import MLCompositeCC, MLNaiveQuantifier, MLCC, MLPCC, MLRegressionQuantification, \
     MLACC, \
-    MLPACC, MLNaiveAggregativeQuantifier, MLMLPE, MLSlicedCC, StackMLRQuantifier, MLadjustedCount, MLprobAdjustedCount, CompositeMLRegressionQuantification, MLAggregativeQuantifier
+    MLPACC, MLNaiveAggregativeQuantifier, MLMLPE, MLSlicedCC, StackMLRQuantifier, MLadjustedCount, MLprobAdjustedCount, \
+    CompositeMLRegressionQuantification, MLAggregativeQuantifier
 from quapy.method.aggregative import PACC, CC, EMQ, PCC, ACC, HDy
 import numpy as np
 from data.dataset  import Dataset
@@ -21,6 +21,12 @@ from mlevaluation import ml_natural_prevalence_prediction, ml_artificial_prevale
 import sys
 import os
 import pickle
+
+import random
+
+seed = 1
+random.seed(seed)
+np.random.seed(seed)
 
 
 def cls():
@@ -34,7 +40,7 @@ def calibratedCls():
 # DEBUG=True
 
 # if DEBUG:
-sample_size = 100
+sample_size = 100  # revise
 n_samples = 5000
 
 picklepath = 'pickles_manuel'
@@ -48,6 +54,9 @@ TC_DATASETS = ['reuters21578', 'jrcall', 'ohsumed', 'rcv1']
 
 
 def models():
+    common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
+    yield 'MRQ-ChainPACC', MLRegressionQuantification(MLPACC(ClassifierChain(cls())), **common)
+
     #yield 'MLPE', MLMLPE()
 
     # naives (Binary Classification + Binary Quantification)
@@ -109,10 +118,9 @@ def models():
     yield 'MRQ-ChainCC', MLRegressionQuantification(MLCC(ClassifierChain(cls())), **common)
     yield 'MRQ-ChainPCC', MLRegressionQuantification(MLPCC(ClassifierChain(cls())), **common)
     yield 'MRQ-ChainACC', MLRegressionQuantification(MLACC(ClassifierChain(cls())), **common)
-    yield 'MRQ-ChainPACC', MLRegressionQuantification(MLPACC(ClassifierChain(cls())), **common)
 
-    
-    
+
+
     # MLC + BQ
     yield 'CMRQ-CC', CompositeMLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
     yield 'CMRQ-PCC', CompositeMLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
@@ -131,7 +139,7 @@ def models():
     yield 'CMRQ-StackACC5', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), k=5, **common)
     yield 'CMRQ-StackPACC5', CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), k=5, **common)
 
-    
+
     # Chaos
     # yield 'StackMRQ-CC', StackMLRQuantifier(MLNaiveQuantifier(CC(cls())), **common)
     # yield 'StackMRQ-PCC', StackMLRQuantifier(MLNaiveQuantifier(PCC(cls())), **common)

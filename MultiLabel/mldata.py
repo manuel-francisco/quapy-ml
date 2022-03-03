@@ -68,7 +68,7 @@ class MultilabelledCollection:
         labels = self.labels[index]
         return MultilabelledCollection(documents, labels)
 
-    def train_test_split(self, train_prop=0.6, random_state=None, iterative=False):
+    def train_test_split(self, train_prop=0.6, random_state=None, iterative=True):
         if iterative:
             tr_docs, tr_labels, te_docs, te_labels = \
                 iterative_train_test_split(self.instances, self.labels, test_size=1-train_prop)
