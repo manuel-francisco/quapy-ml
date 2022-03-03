@@ -457,14 +457,17 @@ class CompositeMLRegressionQuantification(MLRegressionQuantification):
         corrs[sel_aux, sel] = 0
 
         while len(selected) < self.k and len(selected) < self.no_labels:
-            new_sel = np.argmax(corrs[selected, :].sum(axis=0))
-            assert not new_sel in selected, "already selected"
-            selected.append(new_sel)
+            corrs_sum = corrs[selected, :].sum(axis=0)
+            new_sel = np.argmax(corrs_sum)
+            if new_sel in selected:
+                assert (corrs_sum <= 0).all(), "label already selected"
+                break # in the event that there are no more labels with positive corr
 
-            for i in range(len(selected)):
-                for j in range(i, len(selected)):
-                    corrs[selected[i], selected[j]] = 0
-                    corrs[selected[j], selected[i]] = 0
+            for s in selected:
+                corrs[s, new_sel] = 0
+                corrs[new_sel, s] = 0
+            
+            selected.append(new_sel)
         
         self.selected = sorted(selected)
         self.not_selected = [i for i in range(self.no_labels) if i not in self.selected]
