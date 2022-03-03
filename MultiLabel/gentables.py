@@ -24,17 +24,20 @@ import pickle
 
 models = ['MLPE',
     'NaiveCC', 'NaivePCC', 'NaiveACC', 'NaivePACC', #'NaivePACCcal', 'NaiveACCit', 'NaivePACCit',
-    #'NaiveHDy',
-    'NaiveSLD',
-    # 'ChainCC', 'ChainPCC', 'ChainACC', 'ChainPACC',
-    'StackCC', 
-    # 'StackPCC', 'StackPCCcal', 'StackACC', 'StackPACC', 'StackPACCcal', 'StackACCit', 'StackP'
+    #'NaiveHDy', 'NaiveSLD',
+    'ChainCC', 'ChainPCC', 'ChainACC', 'ChainPACC',
+    'StackCC', 'StackPCC', #'StackPCCcal',
+    'StackACC', 'StackPACC', #'StackPACCcal', 'StackACCit', 'StackP'
     #                                                               'ACCit',
-    'CompositeCC', 'SlicedCC', 'CMRQ-CC', 'CMRQ-StackCC',
-    'MRQ-CC', 
-    # 'MRQ-PCC', 'MRQ-ACC', 'MRQ-PACC',  'MRQ-ACCit', 'MRQ-PACCit',
+    #'CompositeCC', 'SlicedCC', 'CMRQ-CC', 'CMRQ-StackCC',
+    'MRQ-CC', 'MRQ-PCC', 'MRQ-ACC', 'MRQ-PACC', # 'MRQ-ACCit', 'MRQ-PACCit',
     # 'StackMRQ-CC', 'StackMRQ-PCC', 'StackMRQ-ACC', 'StackMRQ-PACC',
-    # 'MRQ-StackCC', 'MRQ-StackPCC', 'MRQ-StackACC', 'MRQ-StackPACC',
+    'MRQ-StackCC', 'MRQ-StackPCC', 'MRQ-StackACC', 'MRQ-StackPACC',
+    'MRQ-ChainCC', 'MRQ-ChainPCC', 'MRQ-ChainACC', 'MRQ-ChainPACC',
+    'CMRQ-CC', 'CMRQ-PCC', 'CMRQ-ACC', 'CMRQ-PACC',
+    'CMRQ-StackCC', 'CMRQ-StackPCC', 'CMRQ-StackACC', 'CMRQ-StackPACC',
+    'CMRQ-StackCC2', 'CMRQ-StackPCC2', 'CMRQ-StackACC2', 'CMRQ-StackPACC2',
+    'CMRQ-StackCC5', 'CMRQ-StackPCC5', 'CMRQ-StackACC5', 'CMRQ-StackPACC5',
     # 'StackMRQ-StackCC', 'StackMRQ-StackPCC', 'StackMRQ-StackACC', 'StackMRQ-StackPACC',
     # 'MRQ-StackCC-app', 'MRQ-StackPCC-app', 'MRQ-StackACC-app', 'MRQ-StackPACC-app',
     # 'StackMRQ-StackCC-app', 'StackMRQ-StackPCC-app', 'StackMRQ-StackACC-app', 'StackMRQ-StackPACC-app',
@@ -44,6 +47,8 @@ models = ['MLPE',
 
 # datasets = sorted(set([x[0] for x in available_data_sets().keys()]))
 datasets = TC_DATASETS
+datasets.extend(['Corel5k', 'bibtex', 'birds', 'delicious', 'emotions', 'enron', 'genbase', 'mediamill', 'medical', 'rcv1subset1', 'rcv1subset2', 'rcv1subset3', 'rcv1subset4', 'rcv1subset5', 'scene', 'tmc2007_500', 'yeast'])
+
 
 
 def generate_table(path, protocol, error):

@@ -37,14 +37,14 @@ def calibratedCls():
 sample_size = 100
 n_samples = 5000
 
-picklepath = '../../word-class-embeddings/pickles'
+picklepath = 'pickles_manuel'
 
 #SKMULTILEARN_ALL_DATASETS = sorted(set([x[0] for x in available_data_sets().keys()]))
-SKMULTILEARN_ALL_DATASETS = ['Corel5k', 'bibtex', 'birds', 'delicious', 'emotions', 'enron', 'genbase', 'mediamill', 'medical', 'rcv1subset1', 'rcv1subset2', 'rcv1subset3', 'rcv1subset4', 'rcv1subset5', 'scene', 'tmc2007_500', 'yeast'] #offline
+SKMULTILEARN_ALL_DATASETS = ['birds', 'emotions', 'enron', 'genbase', 'medical', 'scene', 'tmc2007_500', 'yeast'] #offline
 SKMULTILEARN_RED_DATASETS = [x+'-red' for x in SKMULTILEARN_ALL_DATASETS]
 TC_DATASETS = ['reuters21578', 'jrcall', 'ohsumed', 'rcv1']
 
-DATASETS = ['reuters21578']
+#DATASETS = ['reuters21578']
 
 
 def models():
@@ -117,10 +117,19 @@ def models():
     yield 'CMRQ-CC', CompositeMLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
     yield 'CMRQ-PCC', CompositeMLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
     yield 'CMRQ-ACC', CompositeMLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
+    yield 'CMRQ-PACC', CompositeMLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
     yield 'CMRQ-StackCC', CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), **common)
     yield 'CMRQ-StackPCC', CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), **common)
     yield 'CMRQ-StackACC', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), **common)
     yield 'CMRQ-StackPACC', CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), **common)
+    yield 'CMRQ-StackCC2', CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), k=2, **common)
+    yield 'CMRQ-StackPCC2', CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), k=2, **common)
+    yield 'CMRQ-StackACC2', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), k=2, **common)
+    yield 'CMRQ-StackPACC2', CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), k=2, **common)
+    yield 'CMRQ-StackCC5', CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), k=5, **common)
+    yield 'CMRQ-StackPCC5', CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), k=5, **common)
+    yield 'CMRQ-StackACC5', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), k=5, **common)
+    yield 'CMRQ-StackPACC5', CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), k=5, **common)
 
     
     # Chaos
@@ -202,7 +211,7 @@ def get_dataset(dataset_name, dopickle=True):
         yte = data.test_labelmatrix.todense().getA()
 
         # remove categories with < 20 training or test documents
-        to_keep = np.logical_and(ytr.sum(axis=0)>=20, yte.sum(axis=0)>=20)
+        to_keep = np.logical_and(ytr.sum(axis=0)>=5, yte.sum(axis=0)>=5)
         # keep the 10 most populated categories
         # to_keep = np.argsort(ytr.sum(axis=0))[-10:]
         ytr = ytr[:, to_keep]
@@ -306,7 +315,7 @@ if __name__ == '__main__':
 
     os.makedirs(opt.results, exist_ok=True)
 
-    for datasetname, (modelname,model) in itertools.product(DATASETS, models()):
+    for datasetname, (modelname,model) in itertools.product(SKMULTILEARN_ALL_DATASETS, models()):
         run_experiment(datasetname, modelname, model)
 
 

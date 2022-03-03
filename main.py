@@ -179,7 +179,7 @@ def get_dataset(dataset_name, dopickle=True):
             # yte = yte[:, valid_categories]
 
     elif dataset_name in TC_DATASETS:
-        picklepath = '/home/moreo/word-class-embeddings/pickles'
+        picklepath = '/home/manolo/Documentos/multi-label quantification/QuaPyPrivate/pickles_manuel'
         data = Dataset.load(dataset_name, pickle_path=f'{picklepath}/{dataset_name}.pickle')
         Xtr, Xte = data.vectorize()
         ytr = data.devel_labelmatrix.todense().getA()

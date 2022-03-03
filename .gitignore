@@ -130,3 +130,13 @@ dmypy.json
 .pyre/
 
 *__pycache__*
+
+
+#manolo
+results/*
+tables/*
+nohup.out
+main.aux
+main.out
+main.log
+pickles_manuel/*

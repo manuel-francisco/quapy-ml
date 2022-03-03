@@ -391,7 +391,8 @@ class CompositeMLRegressionQuantification(MLRegressionQuantification):
                  sample_size=500,
                  norm=True,
                  means=True,
-                 stds=True):
+                 stds=True,
+                 k=10):
 
         assert protocol in ['npp', 'app'], 'unknown protocol'
         self.estimator = mlquantifier
@@ -414,6 +415,7 @@ class CompositeMLRegressionQuantification(MLRegressionQuantification):
 
         self.selected = None
         self.not_selected = None
+        self.k = k
     
     def _extract_features(self, sample, Xs, ys, samples_mean, samples_std):
         ys.append(sample.prevalence()[:, 1])
@@ -449,7 +451,7 @@ class CompositeMLRegressionQuantification(MLRegressionQuantification):
         corrs[sel, sel_aux] = 0
         corrs[sel_aux, sel] = 0
 
-        while len(selected) < 10 and len(selected) < self.no_labels:
+        while len(selected) < self.k and len(selected) < self.no_labels:
             new_sel = np.argmax(corrs[selected, :].sum(axis=0))
             assert not new_sel in selected, "already selected"
             selected.append(new_sel)
