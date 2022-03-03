@@ -194,9 +194,10 @@ class MLACC(MLCC):
         val_predictions = self.preclassify(val.instances)
         self.Pte_cond_estim_ = []
         for c in data.classes_:
-            pos_c = val.labels[:,c].sum()
-            neg_c = len(val) - pos_c
-            self.Pte_cond_estim_.append(confusion_matrix(val.labels[:,c], val_predictions[:,c]).T / np.array([neg_c, pos_c]))
+            # pos_c = val.labels[:,c].sum()
+            # neg_c = len(val) - pos_c
+            Pmatrix = ACC.getPteCondEstim([0,1], val.labels[:,c], val_predictions[:,c])
+            self.Pte_cond_estim_.append(Pmatrix)
         return self
 
     def preclassify(self, instances):
@@ -219,7 +220,8 @@ class MLPACC(MLPCC):
         for c in data.classes_:
             pos_posteriors = val_posteriors[:,c]
             c_posteriors = np.asarray([1-pos_posteriors, pos_posteriors]).T
-            self.Pte_cond_estim_.append(PACC.getPteCondEstim([0,1], val.labels[:,c], c_posteriors))
+            Pmatrix = PACC.getPteCondEstim([0, 1], val.labels[:, c], c_posteriors)
+            self.Pte_cond_estim_.append(Pmatrix)
         return self
 
     def aggregate(self, posteriors):
@@ -326,7 +328,8 @@ class MLRegressionQuantification:
 
     def _extract_features(self, sample, Xs, ys, samples_mean, samples_std):
         ys.append(sample.prevalence()[:, 1])
-        Xs.append(self.estimator.quantify(sample.instances)[:, 1])
+        prev = self.estimator.quantify(sample.instances)[:, 1]
+        Xs.append(prev)
         if self.means:
             samples_mean.append(sample.instances.mean(axis=0).getA().flatten())
         if self.stds:
@@ -355,12 +358,14 @@ class MLRegressionQuantification:
     def fit(self, data:MultilabelledCollection):
         self.classes_ = data.classes_
         tr, val = data.train_test_split()
+        assert all(tr.counts()>0), f'this is not gonna work, {tr.counts()}'
         self.estimator.fit(tr)
         if self.protocol == 'npp':
             Xs, ys = self.generate_samples_npp(val)
         elif self.protocol == 'app':
             Xs, ys = self.generate_samples_app(val)
         # Xs = self.norm.fit_transform(Xs)
+
         self.reg.fit(Xs, ys)
         return self
 

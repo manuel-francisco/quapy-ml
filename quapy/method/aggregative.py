@@ -232,9 +232,23 @@ class ACC(AggregativeQuantifier):
 
         # estimate the matrix with entry (i,j) being the estimate of P(yi|yj), that is, the probability that a
         # document that belongs to yj ends up being classified as belonging to yi
-        self.Pte_cond_estim_ = confusion_matrix(y, y_).T / class_count
+        self.Pte_cond_estim_ = self.getPteCondEstim(data.classes_, y, y_)
 
         return self
+
+    @classmethod
+    def getPteCondEstim(cls, classes, y, y_):
+        # estimate the matrix with entry (i,j) being the estimate of P(yi|yj), that is, the probability that a
+        # document that belongs to yj ends up being classified as belonging to yi
+        conf = confusion_matrix(y, y_, labels=classes).T
+        conf = conf.astype(np.float)
+        class_counts = conf.sum(axis=0)
+        for i, _ in enumerate(classes):
+            if class_counts[i] == 0:
+                conf[i, i] = 1
+            else:
+                conf[:, i] /= class_counts[i]
+        return conf
 
     def classify(self, data):
         return self.cc.classify(data)
@@ -331,9 +345,12 @@ class PACC(AggregativeProbabilisticQuantifier):
         # estimate the matrix with entry (i,j) being the estimate of P(yi|yj), that is, the probability that a
         # document that belongs to yj ends up being classified as belonging to yi
         n_classes = len(classes)
-        confusion = np.empty(shape=(n_classes, n_classes))
+        # confusion = np.zeros(shape=(n_classes, n_classes))
+        confusion = np.eye(n_classes)
         for i, class_ in enumerate(classes):
-            confusion[i] = y_[y == class_].mean(axis=0)
+            idx = y == class_
+            if idx.any():
+                confusion[i] = y_[idx].mean(axis=0)
 
         return confusion.T
 
