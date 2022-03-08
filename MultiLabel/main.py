@@ -24,6 +24,9 @@ import pickle
 
 import random
 
+from skmultilearn.adapt import BRkNNaClassifier, BRkNNbClassifier, MLkNN, MLARAM, MLTSVM
+
+
 seed = 1
 random.seed(seed)
 np.random.seed(seed)
@@ -45,7 +48,9 @@ n_samples = 5000
 
 picklepath = 'pickles_manuel'
 
-SKMULTILEARN_ALL_DATASETS = sorted(set([x[0] for x in available_data_sets().keys()]))
+#SKMULTILEARN_ALL_DATASETS = sorted(set([x[0] for x in available_data_sets().keys()]))
+SKMULTILEARN_ALL_DATASETS = ['Corel5k', 'bibtex', 'birds', 'delicious', 'emotions', 'enron', 'genbase', 'mediamill', 'medical', 'scene', 'tmc2007_500', 'yeast']
+SKMULTILEARN_NOBIG_DATASETS = ['birds', 'emotions', 'enron', 'genbase', 'mediamill', 'medical', 'scene', 'tmc2007_500', 'yeast']
 SKMULTILEARN_SMALL_DATASETS = ['birds', 'emotions', 'enron', 'genbase', 'medical', 'scene', 'tmc2007_500', 'yeast'] #offline
 SKMULTILEARN_RED_DATASETS = [x+'-red' for x in SKMULTILEARN_ALL_DATASETS]
 TC_DATASETS = ['reuters21578', 'jrcall', 'ohsumed', 'rcv1']
@@ -55,7 +60,7 @@ TC_DATASETS = ['reuters21578', 'jrcall', 'ohsumed', 'rcv1']
 
 def models():
     common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
-    yield 'MRQ-ChainPACC', MLRegressionQuantification(MLPACC(ClassifierChain(cls())), **common)
+    # yield 'MRQ-ChainPACC', MLRegressionQuantification(MLPACC(ClassifierChain(cls())), **common)
 
     #yield 'MLPE', MLMLPE()
 
@@ -80,10 +85,10 @@ def models():
     # yield 'StackPACCcal', MLPACC(MLStackedClassifier(calibratedCls()))
     # yield 'StackACCit', MLACC(MLStackedClassifier(cls()))
     # yield 'StackPACCit', MLPACC(MLStackedClassifier(cls()))
-    yield 'ChainCC', MLCC(ClassifierChain(cls(), cv=None))
-    yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None))
-    yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None))
-    yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None))
+    # yield 'ChainCC', MLCC(ClassifierChain(cls(), cv=None))
+    # yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None))
+    # yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None))
+    # yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None))
 
 
 
@@ -115,9 +120,9 @@ def models():
     # yield 'MRQ-StackPCC-app', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), protocol='app', **common)
     # yield 'MRQ-StackACC-app', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), protocol='app', **common)
     # yield 'MRQ-StackPACC-app', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), protocol='app', **common)
-    yield 'MRQ-ChainCC', MLRegressionQuantification(MLCC(ClassifierChain(cls())), **common)
-    yield 'MRQ-ChainPCC', MLRegressionQuantification(MLPCC(ClassifierChain(cls())), **common)
-    yield 'MRQ-ChainACC', MLRegressionQuantification(MLACC(ClassifierChain(cls())), **common)
+    # yield 'MRQ-ChainCC', MLRegressionQuantification(MLCC(ClassifierChain(cls())), **common)
+    # yield 'MRQ-ChainPCC', MLRegressionQuantification(MLPCC(ClassifierChain(cls())), **common)
+    # yield 'MRQ-ChainACC', MLRegressionQuantification(MLACC(ClassifierChain(cls())), **common)
 
 
 
@@ -158,6 +163,24 @@ def models():
     # yield 'MLStackAdjustedC', MLadjustedCount(MLStackedClassifier(cls()))
     # yield 'MLprobAdjustedC', MLprobAdjustedCount(OneVsRestClassifier(calibratedCls()))
     # yield 'MLStackProbAdjustedC', MLprobAdjustedCount(MLStackedClassifier(calibratedCls()))
+
+
+
+    # Multilabel classifiers exploration
+    yield "MLkNN-MLCC", MLCC(MLkNN())
+    yield "MLkNN-MLPCC", MLPCC(MLkNN())
+    yield "MLkNN-MLACC", MLACC(MLkNN())
+    yield "MLkNN-MLPACC", MLPACC(MLkNN())
+    yield "MLARAM-MLCC", MLCC(MLkNN())
+    yield "MLARAM-MLPCC", MLPCC(MLkNN())
+    yield "MLARAM-MLACC", MLACC(MLkNN())
+    yield "MLARAM-MLPACC", MLPACC(MLkNN())
+    yield "MLTSVM-MLCC", MLCC(MLTSVM())
+    yield "MLTSVM-MLPCC", MLPCC(MLTSVM())
+    yield "MLTSVM-MLACC", MLACC(MLTSVM())
+    yield "MLTSVM-MLPACC", MLPACC(MLTSVM())
+
+
 
 
 def get_dataset(dataset_name, dopickle=True):
@@ -262,14 +285,15 @@ def print_info(train, test):
     print(f'MLPE: {qp.error.mae(train.prevalence(), test.prevalence()):.5f}')
 
 
-def save_results(npp_results, app_results, result_path):
+def save_results(npp_results, app_results, result_path, train_prevs):
     # results are lists of tuples of (true_prevs, estim_prevs)
     # each true_prevs is an ndarray of ndim=2, but the second dimension is constrained
     def _prepare_result_lot(lot_results):
         true_prevs, estim_prevs = lot_results
         return {
             'true_prevs': [true_i[:,0].flatten() for true_i in true_prevs],  # removes the constrained prevalence
-            'estim_prevs': [estim_i[:,0].flatten() for estim_i in estim_prevs]  # removes the constrained prevalence
+            'estim_prevs': [estim_i[:,0].flatten() for estim_i in estim_prevs],  # removes the constrained prevalence
+            'train_prevs' : train_prevs,
         }
     results = {
         'npp': _prepare_result_lot(npp_results),
@@ -312,7 +336,7 @@ def run_experiment(dataset_name, model_name, model):
 
     results_npp = ml_natural_prevalence_prediction(model, test, sample_size, repeats=100)
     results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=11, repeats=5)
-    save_results(results_npp, results_app, result_path)
+    save_results(results_npp, results_app, result_path, train.prevalence())
 
 
 if __name__ == '__main__':
@@ -323,7 +347,7 @@ if __name__ == '__main__':
 
     os.makedirs(opt.results, exist_ok=True)
 
-    for datasetname, (modelname,model) in itertools.product(SKMULTILEARN_SMALL_DATASETS, models()):
+    for datasetname, (modelname,model) in itertools.product(SKMULTILEARN_NOBIG_DATASETS, models()):
         run_experiment(datasetname, modelname, model)
 
 

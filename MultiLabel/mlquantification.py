@@ -196,7 +196,7 @@ class MLACC(MLCC):
         for c in data.classes_:
             # pos_c = val.labels[:,c].sum()
             # neg_c = len(val) - pos_c
-            Pmatrix = ACC.getPteCondEstim([0,1], val.labels[:,c], val_predictions[:,c])
+            Pmatrix = ACC.getPteCondEstim([0,1], val.labels[:,c], val_predictions[:,c].todense())
             self.Pte_cond_estim_.append(Pmatrix)
         return self
 
