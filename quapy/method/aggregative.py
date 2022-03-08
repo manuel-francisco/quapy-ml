@@ -268,6 +268,9 @@ class ACC(AggregativeQuantifier):
             adjusted_prevs /= adjusted_prevs.sum()
         except np.linalg.LinAlgError:
             adjusted_prevs = prevs_estim  # no way to adjust them!
+        except ValueError:
+            adjusted_prevs = prevs_estim  # no way to adjust them!
+            print('salta')
         return adjusted_prevs
 
 

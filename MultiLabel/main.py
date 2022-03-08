@@ -46,7 +46,7 @@ def calibratedCls():
 sample_size = 100  # revise
 n_samples = 5000
 
-picklepath = 'pickles_manuel'
+picklepath = 'pickles'
 
 #SKMULTILEARN_ALL_DATASETS = sorted(set([x[0] for x in available_data_sets().keys()]))
 SKMULTILEARN_ALL_DATASETS = ['Corel5k', 'bibtex', 'birds', 'delicious', 'emotions', 'enron', 'genbase', 'mediamill', 'medical', 'scene', 'tmc2007_500', 'yeast']
@@ -65,11 +65,11 @@ def models():
     #yield 'MLPE', MLMLPE()
 
     # naives (Binary Classification + Binary Quantification)
-    yield 'NaiveCC', MLNaiveAggregativeQuantifier(CC(cls()))
-    yield 'NaivePCC', MLNaiveAggregativeQuantifier(PCC(cls()))
+    # yield 'NaiveCC', MLNaiveAggregativeQuantifier(CC(cls()))
+    # yield 'NaivePCC', MLNaiveAggregativeQuantifier(PCC(cls()))
     # yield 'NaivePCCcal', MLNaiveAggregativeQuantifier(PCC(calibratedCls()))
-    yield 'NaiveACC', MLNaiveAggregativeQuantifier(ACC(cls()))
-    yield 'NaivePACC', MLNaiveAggregativeQuantifier(PACC(cls()))
+    # yield 'NaiveACC', MLNaiveAggregativeQuantifier(ACC(cls()))
+    # yield 'NaivePACC', MLNaiveAggregativeQuantifier(PACC(cls()))
     # yield 'NaivePACCcal', MLNaiveAggregativeQuantifier(PACC(calibratedCls()))
     # yield 'NaiveACCit', MLNaiveAggregativeQuantifier(ACC(cls()))
     # yield 'NaivePACCit', MLNaiveAggregativeQuantifier(PACC(cls()))
@@ -77,11 +77,11 @@ def models():
     #yield 'NaiveSLD', MLNaiveAggregativeQuantifier(EMQ(calibratedCls()))
 
     # Multi-label Classification + Binary Quantification
-    yield 'StackCC', MLCC(MLStackedClassifier(cls()))
-    yield 'StackPCC', MLPCC(MLStackedClassifier(cls()))
+    # yield 'StackCC', MLCC(MLStackedClassifier(cls()))
+    # yield 'StackPCC', MLPCC(MLStackedClassifier(cls()))
     # yield 'StackPCCcal', MLPCC(MLStackedClassifier(calibratedCls()))
-    yield 'StackACC', MLACC(MLStackedClassifier(cls()))
-    yield 'StackPACC', MLPACC(MLStackedClassifier(cls()))
+    # yield 'StackACC', MLACC(MLStackedClassifier(cls()))
+    # yield 'StackPACC', MLPACC(MLStackedClassifier(cls()))
     # yield 'StackPACCcal', MLPACC(MLStackedClassifier(calibratedCls()))
     # yield 'StackACCit', MLACC(MLStackedClassifier(cls()))
     # yield 'StackPACCit', MLPACC(MLStackedClassifier(cls()))
@@ -104,18 +104,18 @@ def models():
 
     # Binary Classification + Multi-label Quantification
     common={'protocol':'app', 'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
-    yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
-    yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
-    yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
-    yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
+    # yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
+    # yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
+    # yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
+    # yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
     # yield 'MRQ-ACCit', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
     # yield 'MRQ-PACCit', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
 
     # Multi-label Classification + Multi-label Quantification
-    yield 'MRQ-StackCC', MLRegressionQuantification(MLCC(MLStackedClassifier(cls())), **common)
-    yield 'MRQ-StackPCC', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), **common)
-    yield 'MRQ-StackACC', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), **common)
-    yield 'MRQ-StackPACC', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), **common)
+    # yield 'MRQ-StackCC', MLRegressionQuantification(MLCC(MLStackedClassifier(cls())), **common)
+    # yield 'MRQ-StackPCC', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), **common)
+    # yield 'MRQ-StackACC', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), **common)
+    # yield 'MRQ-StackPACC', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), **common)
     # yield 'MRQ-StackCC-app', MLRegressionQuantification(MLCC(MLStackedClassifier(cls())), protocol='app', **common)
     # yield 'MRQ-StackPCC-app', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), protocol='app', **common)
     # yield 'MRQ-StackACC-app', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), protocol='app', **common)
@@ -127,22 +127,22 @@ def models():
 
 
     # MLC + BQ
-    yield 'CMRQ-CC', CompositeMLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
-    yield 'CMRQ-PCC', CompositeMLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
-    yield 'CMRQ-ACC', CompositeMLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
-    yield 'CMRQ-PACC', CompositeMLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
-    yield 'CMRQ-StackCC', CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), **common)
-    yield 'CMRQ-StackPCC', CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), **common)
-    yield 'CMRQ-StackACC', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), **common)
-    yield 'CMRQ-StackPACC', CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), **common)
-    yield 'CMRQ-StackCC2', CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), k=2, **common)
-    yield 'CMRQ-StackPCC2', CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), k=2, **common)
-    yield 'CMRQ-StackACC2', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), k=2, **common)
-    yield 'CMRQ-StackPACC2', CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), k=2, **common)
-    yield 'CMRQ-StackCC5', CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), k=5, **common)
-    yield 'CMRQ-StackPCC5', CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), k=5, **common)
-    yield 'CMRQ-StackACC5', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), k=5, **common)
-    yield 'CMRQ-StackPACC5', CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), k=5, **common)
+    # yield 'CMRQ-CC', CompositeMLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
+    # yield 'CMRQ-PCC', CompositeMLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
+    # yield 'CMRQ-ACC', CompositeMLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
+    # yield 'CMRQ-PACC', CompositeMLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
+    # yield 'CMRQ-StackCC', CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), **common)
+    # yield 'CMRQ-StackPCC', CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), **common)
+    # yield 'CMRQ-StackACC', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), **common)
+    # yield 'CMRQ-StackPACC', CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), **common)
+    # yield 'CMRQ-StackCC2', CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), k=2, **common)
+    # yield 'CMRQ-StackPCC2', CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), k=2, **common)
+    # yield 'CMRQ-StackACC2', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), k=2, **common)
+    # yield 'CMRQ-StackPACC2', CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), k=2, **common)
+    # yield 'CMRQ-StackCC5', CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), k=5, **common)
+    # yield 'CMRQ-StackPCC5', CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), k=5, **common)
+    # yield 'CMRQ-StackACC5', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), k=5, **common)
+    # yield 'CMRQ-StackPACC5', CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), k=5, **common)
 
 
     # Chaos
@@ -167,18 +167,18 @@ def models():
 
 
     # Multilabel classifiers exploration
-    yield "MLkNN-MLCC", MLCC(MLkNN())
-    yield "MLkNN-MLPCC", MLPCC(MLkNN())
+    # yield "MLkNN-MLCC", MLCC(MLkNN())
+    # yield "MLkNN-MLPCC", MLPCC(MLkNN())
     yield "MLkNN-MLACC", MLACC(MLkNN())
-    yield "MLkNN-MLPACC", MLPACC(MLkNN())
-    yield "MLARAM-MLCC", MLCC(MLkNN())
-    yield "MLARAM-MLPCC", MLPCC(MLkNN())
-    yield "MLARAM-MLACC", MLACC(MLkNN())
-    yield "MLARAM-MLPACC", MLPACC(MLkNN())
-    yield "MLTSVM-MLCC", MLCC(MLTSVM())
-    yield "MLTSVM-MLPCC", MLPCC(MLTSVM())
-    yield "MLTSVM-MLACC", MLACC(MLTSVM())
-    yield "MLTSVM-MLPACC", MLPACC(MLTSVM())
+    # yield "MLkNN-MLPACC", MLPACC(MLkNN())
+    # yield "MLARAM-MLCC", MLCC(MLkNN())
+    # yield "MLARAM-MLPCC", MLPCC(MLkNN())
+    # yield "MLARAM-MLACC", MLACC(MLkNN())
+    # yield "MLARAM-MLPACC", MLPACC(MLkNN())
+    # yield "MLTSVM-MLCC", MLCC(MLTSVM())
+    # yield "MLTSVM-MLPCC", MLPCC(MLTSVM())
+    # yield "MLTSVM-MLACC", MLACC(MLTSVM())
+    # yield "MLTSVM-MLPACC", MLPACC(MLTSVM())
 
 
 
@@ -347,7 +347,7 @@ if __name__ == '__main__':
 
     os.makedirs(opt.results, exist_ok=True)
 
-    for datasetname, (modelname,model) in itertools.product(SKMULTILEARN_NOBIG_DATASETS, models()):
+    for datasetname, (modelname,model) in itertools.product(['birds'], models()):
         run_experiment(datasetname, modelname, model)
 
 

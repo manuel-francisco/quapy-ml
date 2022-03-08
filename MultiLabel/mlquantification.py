@@ -2,6 +2,7 @@ import numpy as np
 from copy import deepcopy
 
 import sklearn.preprocessing
+from scipy.sparse import issparse
 from sklearn.ensemble import StackingRegressor
 from sklearn.metrics import confusion_matrix
 from sklearn.multioutput import MultiOutputRegressor
@@ -196,12 +197,15 @@ class MLACC(MLCC):
         for c in data.classes_:
             # pos_c = val.labels[:,c].sum()
             # neg_c = len(val) - pos_c
-            Pmatrix = ACC.getPteCondEstim([0,1], val.labels[:,c], val_predictions[:,c].todense())
+            Pmatrix = ACC.getPteCondEstim([0,1], val.labels[:,c], val_predictions[:,c])
             self.Pte_cond_estim_.append(Pmatrix)
         return self
 
     def preclassify(self, instances):
-        return self.learner.predict(instances)
+        predictions = self.learner.predict(instances)
+        if issparse(predictions):
+            predictions = predictions.toarray()
+        return predictions
 
     def aggregate(self, predictions):
         cc_prevs = super(MLACC, self).aggregate(predictions)
