@@ -68,6 +68,13 @@ SKMULTILEARN_SMALL_DATASETS = ['birds', 'emotions', 'enron', 'genbase', 'medical
 SKMULTILEARN_RED_DATASETS = [x+'-red' for x in SKMULTILEARN_ALL_DATASETS]
 TC_DATASETS = ['reuters21578', 'jrcall', 'ohsumed', 'rcv1']
 TC_DATASETS_REDUCED = ['rcv1', 'ohsumed']
+
+
+SPLIT1 = ['birds', 'emotions', 'enron', 'reuters21578', 'jrcall'] #icx
+SPLIT2 = ['genbase', 'mediamill', 'medical', 'Corel5k', 'bibtex',] #ilona
+SPLIT3 = ['scene', 'tmc2007_500', 'yeast', 'ohsumed', 'rcv1', 'delicious'] #amarna
+
+
 ALLTABLE = SKMULTILEARN_ALL_DATASETS + TC_DATASETS_REDUCED
 
 #DATASETS = ['reuters21578']
