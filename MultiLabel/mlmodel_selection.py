@@ -91,12 +91,18 @@ class MLGridSearchQ(MLQuantifier):
             'random_seed': self.random_seed,
             'verbose': False
         }
-        if self.protocol == 'app':
+        if self.protocol == 'app' and isinstance(val_split, MultilabelledCollection):
             return ml_artificial_prevalence_prediction(
                 model, val_split, self.sample_size,
                 n_prevalences=self.n_prevalences,
                 repeats=self.repeats,
                 # **commons
+            )
+        elif self.protocol == 'app' and isinstance(val_split, LabelledCollection):
+            return artificial_prevalence_prediction(
+                model, val_split, self.sample_size,
+                n_prevpoints=self.n_prevalences,
+                #**commons
             )
         elif self.protocol == 'npp':
             return ml_natural_prevalence_prediction(

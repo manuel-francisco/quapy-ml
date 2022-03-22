@@ -114,6 +114,9 @@ class LabelledCollection:
             train_test_split(self.instances, self.labels, train_size=train_prop, stratify=self.labels,
                              random_state=random_state)
         return LabelledCollection(tr_docs, tr_labels), LabelledCollection(te_docs, te_labels)
+    
+    def train_test_split(self, train_prop=0.6, random_state=None):
+        return self.split_stratified(train_prop, random_state)
 
     def artificial_sampling_generator(self, sample_size, n_prevalences=101, repeats=1):
         dimensions = self.n_classes
