@@ -181,6 +181,14 @@ class MLGridSearchQ(MLQuantifier):
     def quantify(self, instances):
         assert hasattr(self, 'best_model_'), 'quantify called before fit'
         return self.best_model_.quantify(instances)
+    
+    def preclassify(self, instances):
+        assert hasattr(self, 'best_model_'), 'quantify called before fit'
+        return self.best_model_.preclassify(instances)
+    
+    def aggregate(self, instances):
+        assert hasattr(self, 'best_model_'), 'quantify called before fit'
+        return self.best_model_.aggregate(instances)
 
     @property
     def classes_(self):
