@@ -12,6 +12,7 @@ from sklearn.linear_model import LogisticRegression, Ridge, Lasso, LassoCV, Mult
     ElasticNet, MultiTaskElasticNetCV, MultiTaskElasticNet, LinearRegression, ARDRegression, BayesianRidge, SGDRegressor
 
 from sklearn.feature_selection import chi2, SelectKBest
+from sklearn.tree import DecisionTreeRegressor
 
 import quapy as qp
 from MultiLabel.mlclassification import MLStackedClassifier, MLStackedRegressor
@@ -29,6 +30,12 @@ class MLQuantifier:
     @abstractmethod
     def quantify(self, instances): ...
 
+    @abstractmethod
+    def set_params(self, **parameters): ...
+
+    @abstractmethod
+    def get_params(self, deep=True): ...
+
 
 class MLMLPE(MLQuantifier):
     def fit(self, data: MultilabelledCollection):
@@ -44,8 +51,7 @@ class MLAggregativeQuantifier(MLQuantifier):
         self.learner = mlcls
 
     def fit(self, data:MultilabelledCollection):
-        self.learner.fit(*data.Xy)
-        return self
+        return self.learner.fit(*data.Xy)
 
     @abstractmethod
     def preclassify(self, instances): ...
@@ -56,6 +62,12 @@ class MLAggregativeQuantifier(MLQuantifier):
     def quantify(self, instances):
         predictions = self.preclassify(instances)
         return self.aggregate(predictions)
+    
+    def set_params(self, **parameters):
+        self.learner.set_params(**parameters)
+
+    def get_params(self, deep=True):
+        return self.learner.get_params()
 
 
 def select_features(X, y):
@@ -66,8 +78,6 @@ def select_features(X, y):
         feature_scores.append(list(skb.scores_))
     
     return np.argsort(-np.mean(feature_scores, axis=0))
-
-
 
 
 
@@ -181,9 +191,18 @@ class MLCC(MLAggregativeQuantifier):
         return np.asarray([neg_prev, pos_prev]).T
 
 
+class DTWrapper(DecisionTreeRegressor):
+    def predict_proba(self, X):
+        return self.predict_proba(X)[:, :, 1]
+
 class MLPCC(MLCC):
     def preclassify(self, instances):
-        return self.learner.predict_proba(instances)
+        predictions = self.learner.predict_proba(instances)
+        if issparse(predictions):
+            predictions = predictions.toarray()
+        if isinstance(predictions, list):
+            predictions = np.asarray(predictions)[:, :, 1].T
+        return predictions
 
 
 class MLACC(MLCC):
@@ -255,11 +274,25 @@ class MLNaiveQuantifier(MLQuantifier):
             pos_prevs[c] = self.estimators[c].quantify(instances)[1]
         neg_prevs = 1-pos_prevs
         return np.asarray([neg_prevs, pos_prevs]).T
+    
+    def set_params(self, **parameters):
+        if self.estimators:
+            for q in self.estimators:
+                q.set_params(**parameters)
+        else:
+            self.q.set_params(**parameters)
+
+    def get_params(self, deep=True):
+        if self.estimators:
+            return self.estimators[0].get_params()
+        
+        return self.q.get_params()
 
 
 class MLNaiveAggregativeQuantifier(MLNaiveQuantifier, MLAggregativeQuantifier):
     def __init__(self, q:AggregativeQuantifier, n_jobs=-1):
-        assert isinstance(q, AggregativeQuantifier), 'the quantifier is not of type aggregative!'
+        # FIXME: assert below removed to nest MLGridSearchQ within the pipeline and avoid circular imports
+        # assert isinstance(q, AggregativeQuantifier), 'the quantifier is not of type aggregative!'
         self.q = q
         self.estimators = None
         self.n_jobs = n_jobs
@@ -316,6 +349,24 @@ class MLRegressionQuantification:
         self.means = means
         self.stds = stds
         # self.covs = covs
+
+    def set_params(self, **parameters):
+        #FIXME: self.reg modifica los nombres de los parameters, comprobar
+        est_params = self.estimator.get_params()
+        reg_params = self.reg.get_params()
+        new_est_params = {}
+        new_reg_params = {}
+        for k,v in parameters.items():
+            if k in est_params.keys():
+                new_est_params[k] = v
+
+            if k in reg_params.keys():
+                new_reg_params[k] = v
+        self.estimator.set_params(**new_est_params)
+        self.reg.set_params(**new_reg_params)
+    
+    def get_params(self):
+        return self.estimator.get_params() + self.reg.get_params()
 
     def _prepare_arrays(self, Xs, ys, samples_mean, samples_std):
         Xs = np.asarray(Xs)
@@ -388,6 +439,100 @@ class MLRegressionQuantification:
         adjusted = adjusted.flatten()
         neg_prevs = 1-adjusted
         return np.asarray([neg_prevs, adjusted]).T
+
+
+
+class kMLQ(MLRegressionQuantification):
+    class LiteMLPACC(MLPACC):
+        def fit(self, train:MultilabelledCollection, val:MultilabelledCollection):
+            self.classes_ = train.classes_
+            self.learner.fit(*train.Xy)
+            val_posteriors = self.preclassify(val.instances)
+            self.Pte_cond_estim_ = []
+            for c in train.classes_:
+                pos_posteriors = val_posteriors[:, c]
+                c_posteriors = np.asarray([1-pos_posteriors, pos_posteriors]).T
+                Pmatrix = PACC.getPteCondEstim([0, 1], val.labels[:, c], c_posteriors)
+                self.Pte_cond_estim.append(Pmatrix)
+            return self
+
+    def __init__(self, base, reg="ridge", k=3, protocol='app', error=qp.error.ae, n_samples=500, sample_size=500, norm=True, means=True, stds=True):
+        assert protocol == "app", "npp not implemented"
+        self.estimators_ = [deepcopy(kMLQ.LiteMLPACC(base)) for _ in range(k)]
+        if reg == "ridge":
+            self.reg = Ridge(normalize=norm)
+        else:
+            self.reg = reg
+        self.k = k
+        self.protocol = protocol
+        self.error = error
+        self.sample_size = sample_size
+        self.n_samples = n_samples
+        self.means = means
+        self.stds = stds
+    
+    def _extract_features(self, sample, Xs, ys, samples_mean, samples_std):
+        ys.append(sample.prevalence()[:, 1])
+        prevs = np.hstack([estimator.quantify(sample.instances)[:, 1] for estimator in self.estimators_])
+        Xs.append(prevs)
+
+        if self.means:
+            samples_mean.append(sample.instances.mean(axis=0).getA().flatten())
+        if self.stds:
+            samples_std.append(sample.instances.todense().std(axis=0).getA().flatten())
+    
+    def fit(self, data:MultilabelledCollection):
+        self.classes_ = data.classes_
+        tr, val = data.train_test_split()
+        assert all(tr.counts() > 0), f'this is not gonna work, {tr.counts()}'
+        self.max_drift_ = np.max(tr.counts())
+        self.delta_ = self.max_drift_ / self.k
+
+        ncats = len(self.classes_)
+        nprevs = 21
+        repeats = max(self.n_samples // (ncats * nprevs), 1)
+        samples_idx_per_estimator = [list() for _ in range(self.k)]
+        for cat in self.classes_:
+            for sample_idx in tr.artificial_sampling_index_generator(
+                sample_size=self.sample_size,
+                category=cat,
+                n_prevalences=nprevs,
+                repeats=repeats,
+                min_df=5
+            ):
+                sample = tr.sampling_from_index(sample_idx)
+                current_drift = self.error(tr.prevalence()[:, 1], sample.prevalence()[:, 1])
+                i = int(min(current_drift // self.delta_, len(self.estimators_)))
+                samples_idx_per_estimator[i].append(sample_idx)
+        
+        for i in range(self.k):
+            #Xs, ys = [], []
+            samples = [tr.sampling_from_index(sample_idx) for sample_idx in samples_idx_per_estimator[i]]
+            self.estimators_[i].fit(samples, val)
+        
+        Xs, ys = self.generate_samples_app(val)
+        self.reg.fit(Xs, ys)
+        return self
+    
+    def quantify(self, instances):
+        Xs = np.hstack([estimator.quantify(instances)[:, 1] for estimator in self.estimators_])
+        if self.means:
+            sample_mean = instances.mean(axis=0).getA()
+            Xs = np.hstack([Xs, sample_mean])
+        if self.stds:
+            sample_std = instances.todense().std(axis=0).getA()
+            Xs = np.hstack([Xs, sample_std])
+        Xs = self.reg.predict(Xs)
+        adjusted = np.clip(Xs, 0, 1)
+        adjusted = adjusted.flatten()
+        neg_prevs = 1-adjusted
+        return np.asarray([neg_prevs, adjusted]).T
+        
+
+
+                
+
+
 
 
 class CompositeMLRegressionQuantification(MLRegressionQuantification):

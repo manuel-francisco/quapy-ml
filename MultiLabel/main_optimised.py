@@ -1,24 +1,24 @@
 import argparse
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.linear_model import LogisticRegression, RANSACRegressor
+from sklearn.ensemble import AdaBoostRegressor, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression, MultiTaskLasso
 import itertools
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain, RegressorChain
-from sklearn.neighbors import KNeighborsRegressor, RadiusNeighborsRegressor
-from sklearn.neural_network import MLPRegressor
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.neighbors import RadiusNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.tree import DecisionTreeClassifier
 from tqdm import tqdm
 from skmultilearn.dataset import load_dataset, available_data_sets
 from scipy.sparse import csr_matrix
 import quapy as qp
-from MultiLabel.mlclassification import MLStackedClassifier, LabelSpacePartion, MLTwinSVM, MLknn, SKMLWrapper
+from MultiLabel.mlclassification import MLLabelClusterer, MLStackedClassifier, LabelSpacePartion, MLStackedRegressor, MLTwinSVM, MLknn, SKMLWrapper, MLEmbedding
 from MultiLabel.mldata import MultilabelledCollection
 from MultiLabel.mlquantification import MLCompositeCC, MLNaiveQuantifier, MLCC, MLPCC, MLRegressionQuantification, \
     MLACC, \
     MLPACC, MLNaiveAggregativeQuantifier, MLMLPE, MLSlicedCC, StackMLRQuantifier, MLadjustedCount, MLprobAdjustedCount, \
-    CompositeMLRegressionQuantification, MLAggregativeQuantifier, kMLQ
+    CompositeMLRegressionQuantification, MLAggregativeQuantifier, MLQuantifier
+from MultiLabel.mlmodel_selection import MLGridSearchQ
 from quapy.method.aggregative import PACC, CC, EMQ, PCC, ACC, HDy
 import numpy as np
 from data.dataset  import Dataset
@@ -29,12 +29,15 @@ import pickle
 
 import random
 
+from skmultilearn.adapt import BRkNNaClassifier, BRkNNbClassifier, MLkNN, MLARAM, MLTSVM
+from quapy.model_selection import GridSearchQ
+
 from sklearn.linear_model import LogisticRegression, Ridge, Lasso, LassoCV, MultiTaskLassoCV, LassoLars, LassoLarsCV, \
     ElasticNet, MultiTaskElasticNetCV, MultiTaskElasticNet, LinearRegression, ARDRegression, BayesianRidge, SGDRegressor
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC, LinearSVR
-
-from skmultilearn.adapt import BRkNNaClassifier, BRkNNbClassifier, MLkNN, MLARAM, MLTSVM
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
 
 
 seed = 1
@@ -69,6 +72,21 @@ ALLTABLE = SKMULTILEARN_ALL_DATASETS + TC_DATASETS_REDUCED
 
 #DATASETS = ['reuters21578']
 
+def select_best(model, param_grid=None):
+    if not param_grid:
+        param_grid = dict(
+            C=np.logspace(-3, 3, 7),
+            class_weight=[None, "balanced"],
+        )
+    
+    return MLGridSearchQ(
+        model=model,
+        param_grid=param_grid,
+        sample_size=100,
+        n_jobs=-1,
+        verbose=True,
+    )
+
 
 def models():
     common={'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
@@ -79,30 +97,30 @@ def models():
     #yield 'PruebasCC', MLNaiveAggregativeQuantifier(CC(cls()))
 
     # naives (Binary Classification + Binary Quantification)
-    yield 'NaiveCC', MLNaiveAggregativeQuantifier(CC(cls()))
-    yield 'NaivePCC', MLNaiveAggregativeQuantifier(PCC(cls()))
+    yield 'NaiveCC', MLNaiveAggregativeQuantifier(select_best(CC(cls())))
+    yield 'NaivePCC', MLNaiveAggregativeQuantifier(select_best(PCC(cls())))
     # yield 'NaivePCCcal', MLNaiveAggregativeQuantifier(PCC(calibratedCls()))
-    yield 'NaiveACC', MLNaiveAggregativeQuantifier(ACC(cls()))
-    yield 'NaivePACC', MLNaiveAggregativeQuantifier(PACC(cls()))
+    yield 'NaiveACC', MLNaiveAggregativeQuantifier(select_best(ACC(cls())))
+    yield 'NaivePACC', MLNaiveAggregativeQuantifier(select_best(PACC(cls())))
     # yield 'NaivePACCcal', MLNaiveAggregativeQuantifier(PACC(calibratedCls()))
     # yield 'NaiveACCit', MLNaiveAggregativeQuantifier(ACC(cls()))
     # yield 'NaivePACCit', MLNaiveAggregativeQuantifier(PACC(cls()))
     # yield 'NaiveHDy', MLNaiveAggregativeQuantifier(HDy(cls()))
-    #yield 'NaiveSLD', MLNaiveAggregativeQuantifier(EMQ(calibratedCls()))
+    yield 'NaiveSLD', MLNaiveAggregativeQuantifier(EMQ(calibratedCls()))
 
     # Multi-label Classification + Binary Quantification
-    yield 'StackCC', MLCC(MLStackedClassifier(cls()))
-    yield 'StackPCC', MLPCC(MLStackedClassifier(cls()))
+    yield 'StackCC', select_best(MLCC(MLStackedClassifier(cls())))
+    yield 'StackPCC', select_best(MLPCC(MLStackedClassifier(cls())))
     # yield 'StackPCCcal', MLPCC(MLStackedClassifier(calibratedCls()))
-    yield 'StackACC', MLACC(MLStackedClassifier(cls()))
-    yield 'StackPACC', MLPACC(MLStackedClassifier(cls()))
+    yield 'StackACC', select_best(MLACC(MLStackedClassifier(cls())))
+    yield 'StackPACC', select_best(MLPACC(MLStackedClassifier(cls())))
     # yield 'StackPACCcal', MLPACC(MLStackedClassifier(calibratedCls()))
     # yield 'StackACCit', MLACC(MLStackedClassifier(cls()))
     # yield 'StackPACCit', MLPACC(MLStackedClassifier(cls()))
-    # yield 'ChainCC', MLCC(ClassifierChain(cls(), cv=None))
-    # yield 'ChainPCC', MLPCC(ClassifierChain(cls(), cv=None))
-    # yield 'ChainACC', MLACC(ClassifierChain(cls(), cv=None))
-    # yield 'ChainPACC', MLPACC(ClassifierChain(cls(), cv=None))
+    # yield 'ChainCC', select_best(MLCC(ClassifierChain(cls())))
+    # yield 'ChainPCC', select_best(MLPCC(ClassifierChain(cls())))
+    # yield 'ChainACC', select_best(MLACC(ClassifierChain(cls())))
+    # yield 'ChainPACC', select_best(MLPACC(ClassifierChain(cls())))
 
 
 
@@ -117,19 +135,19 @@ def models():
     # yield 'MLKNN-PACC', MLPACC(MLknn())
 
     # Binary Classification + Multi-label Quantification
-    common={'protocol':'app', 'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False}#, 'regression':'svr'}
-    yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
-    yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
-    yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
-    yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
+    common={'protocol':'app', 'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
+    yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(select_best(CC(cls()))), **common)
+    yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()))), **common)
+    yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(ACC(cls()))), **common)
+    yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PACC(cls()))), **common)
     # yield 'MRQ-ACCit', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
     # yield 'MRQ-PACCit', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
 
     # Multi-label Classification + Multi-label Quantification
-    yield 'MRQ-StackCC', MLRegressionQuantification(MLCC(MLStackedClassifier(cls())), **common)
-    yield 'MRQ-StackPCC', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), **common)
-    yield 'MRQ-StackACC', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), **common)
-    yield 'MRQ-StackPACC', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), **common)
+    yield 'MRQ-StackCC', MLRegressionQuantification(select_best(MLCC(MLStackedClassifier(cls()))), **common)
+    yield 'MRQ-StackPCC', MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), **common)
+    yield 'MRQ-StackACC', MLRegressionQuantification(select_best(MLACC(MLStackedClassifier(cls()))), **common)
+    yield 'MRQ-StackPACC', MLRegressionQuantification(select_best(MLPACC(MLStackedClassifier(cls()))), **common)
     # yield 'MRQ-StackCC-app', MLRegressionQuantification(MLCC(MLStackedClassifier(cls())), protocol='app', **common)
     # yield 'MRQ-StackPCC-app', MLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), protocol='app', **common)
     # yield 'MRQ-StackACC-app', MLRegressionQuantification(MLACC(MLStackedClassifier(cls())), protocol='app', **common)
@@ -141,14 +159,14 @@ def models():
 
 
     # MLC + BQ
-    yield 'CMRQ-CC', CompositeMLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common)
-    yield 'CMRQ-PCC', CompositeMLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common)
-    yield 'CMRQ-ACC', CompositeMLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
-    yield 'CMRQ-PACC', CompositeMLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
-    yield 'CMRQ-StackCC', CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), **common)
-    yield 'CMRQ-StackPCC', CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), **common)
-    yield 'CMRQ-StackACC', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), **common)
-    yield 'CMRQ-StackPACC', CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), **common)
+    yield 'CMRQ-CC', select_best(CompositeMLRegressionQuantification(MLNaiveQuantifier(CC(cls())), **common))
+    yield 'CMRQ-PCC', select_best(CompositeMLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), **common))
+    yield 'CMRQ-ACC', select_best(CompositeMLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common))
+    yield 'CMRQ-PACC', select_best(CompositeMLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common))
+    yield 'CMRQ-StackCC', select_best(CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), **common))
+    yield 'CMRQ-StackPCC', select_best(CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), **common))
+    yield 'CMRQ-StackACC', select_best(CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), **common))
+    yield 'CMRQ-StackPACC', select_best(CompositeMLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), MLPACC(MLStackedClassifier(cls())), **common))
     # yield 'CMRQ-StackCC2', CompositeMLRegressionQuantification(MLCC(MLStackedClassifier(cls())), MLCC(MLStackedClassifier(cls())), k=2, **common)
     # yield 'CMRQ-StackPCC2', CompositeMLRegressionQuantification(MLPCC(MLStackedClassifier(cls())), MLPCC(MLStackedClassifier(cls())), k=2, **common)
     # yield 'CMRQ-StackACC2', CompositeMLRegressionQuantification(MLACC(MLStackedClassifier(cls())), MLACC(MLStackedClassifier(cls())), k=2, **common)
@@ -178,44 +196,50 @@ def models():
     # yield 'MLprobAdjustedC', MLprobAdjustedCount(OneVsRestClassifier(calibratedCls()))
     # yield 'MLStackProbAdjustedC', MLprobAdjustedCount(MLStackedClassifier(calibratedCls()))
 
-    yield 'MRQ-MultitaskLassoCV', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=MultiTaskLassoCV(normalize=True, n_jobs=-1), **common)
-    yield 'MRQ-Ridge', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=Ridge(normalize=True), **common)
-    yield 'MRQ-MultiTaskElasticNetCV', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=MultiTaskElasticNet(normalize=True), **common)
-    yield 'MRQ-LinearRegression', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=LinearRegression(n_jobs=-1), **common)
-    yield 'MRQ-DecisionTree', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=DecisionTreeRegressor(), **common)
-    yield 'MRQ-RandomForest', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=RandomForestRegressor(n_jobs=-1), **common)
-    yield 'MRQ-GaussianProcess', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=GaussianProcessRegressor(), **common)
-    yield 'MRQ-RANSAC', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=RANSACRegressor(), **common)
-    yield 'MRQ-kNNReg', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=KNeighborsRegressor(), **common)
-    yield 'MRQ-RadiusNeigh', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=RadiusNeighborsRegressor(n_jobs=-1), **common)
-    yield 'MRQ-MLPReg', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=MLPRegressor(), **common)
-    yield 'MRQ-ChainLinearSVR', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=RegressorChain(LinearSVR()), **common)
-    yield 'MRQ-MOLassoLarsCV', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=MultiOutputRegressor(LassoLarsCV(normalize=True)), **common)
-    yield 'MRQ-MOARDRegression', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=MultiOutputRegressor(ARDRegression(normalize=True)), **common)
-    yield 'MRQ-MOBayesianRidge', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=MultiOutputRegressor(BayesianRidge(normalize=True)), **common)
-    yield 'MRQ-MOLinearSVR', MLRegressionQuantification(MLPACC(MLStackedClassifier(cls())), regression=MultiOutputRegressor(LinearSVR()), **common)
-
-    yield 'PCC-MRQ-MultitaskLassoCV', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MultiTaskLassoCV(normalize=True, n_jobs=-1), **common)
-    yield 'PCC-MRQ-Ridge', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=Ridge(normalize=True), **common)
-    yield 'PCC-MRQ-MultiTaskElasticNetCV', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MultiTaskElasticNet(normalize=True), **common)
-    yield 'PCC-MRQ-LinearRegression', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=LinearRegression(n_jobs=-1), **common)
-    yield 'PCC-MRQ-DecisionTree', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=DecisionTreeRegressor(), **common)
-    yield 'PCC-MRQ-RandomForest', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RandomForestRegressor(n_jobs=-1), **common)
-    yield 'PCC-MRQ-GaussianProcess', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=GaussianProcessRegressor(), **common)
-    yield 'PCC-MRQ-RANSAC', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RANSACRegressor(), **common)
-    yield 'PCC-MRQ-kNNReg', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=KNeighborsRegressor(), **common)
-    yield 'PCC-MRQ-RadiusNeigh', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RadiusNeighborsRegressor(n_jobs=-1), **common)
-    yield 'PCC-MRQ-MLPReg', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MLPRegressor(), **common)
-    yield 'PCC-MRQ-ChainLinearSVR', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RegressorChain(LinearSVR()), **common)
-    yield 'PCC-MRQ-MOLassoLarsCV', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MultiOutputRegressor(LassoLarsCV(normalize=True)), **common)
-    yield 'PCC-MRQ-MOARDRegression', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MultiOutputRegressor(ARDRegression(normalize=True)), **common)
-    yield 'PCC-MRQ-MOBayesianRidge', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MultiOutputRegressor(BayesianRidge(normalize=True)), **common)
-    yield 'PCC-MRQ-MOLinearSVR', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MultiOutputRegressor(LinearSVR()), **common)
-
 
 
     # Multilabel classifiers exploration
-    # yield "MLkNN-MLCC", MLCC(SKMLWrapper(MLkNN()))
+    yield "MLkNN-MLPCC", select_best(MLPCC(SKMLWrapper(MLkNN())), param_grid={'k': range(1,10,2), 's': [0.5, 0.7, 1.0]})
+    yield 'ChainPCC', select_best(MLPCC(ClassifierChain(cls())), param_grid={
+        'base_estimator__C': np.logspace(-3, 3, 7),
+        'base_estimator__class_weight': [None, "balanced"],
+    })
+    yield 'CLEMS-PCC', select_best(MLPCC(MLEmbedding()), param_grid={
+        'regressor__n_estimators': [10, 50, 100],
+        'classifier__k': range(1, 10, 2),
+        'classifier__s': [.5, .7, 1.],
+    })
+    #np.warnings.filterwarnings('error', category=np.VisibleDeprecationWarning)
+    yield 'LClusterer-PCC', select_best(MLPCC(MLLabelClusterer()), param_grid={
+        # 'classifier__k': range(1,10,2),
+        # 'classifier__s': [0.5, 0.7, 1.0],
+        'clusterer__n_clusters': [2,3,5],
+    })
+
+    yield 'DT-PCC', select_best(MLPCC(DecisionTreeClassifier()), param_grid={
+        'criterion': ["gini", "entropy"],
+        #'classifier__class_weight': [None, "balanced"],
+    })
+
+    yield 'RF-PCC', select_best(MLPCC(RandomForestClassifier(n_jobs=6)), param_grid={
+        'n_estimators': [10, 100, 200],
+        #'classifier__criterion': ["gini", "entropy"],
+    })
+
+    # yield 'RadiusNeighbours-PCC', select_best(MLPCC(RadiusNeighborsClassifier(n_jobs=-1)), param_grid={
+    #     'classifier__weights': ["uniform", "distance"],
+    #     'classifier__radius': [.5, .8, 1., 1.5],
+    #     'classifier_p': [1, 2],
+    #     'classifier__criterion': ["gini", "entropy"],
+    # })
+
+    # yield 'MLPClassifier-PCC', select_best(MLPCC(MLPClassifier()), param_grid={
+    #     'classifier__weights': ["uniform", "distance"],
+    #     'classifier__radius': [.5, .8, 1., 1.5],
+    #     'classifier_p': [1, 2],
+    #     'classifier__criterion': ["gini", "entropy"],
+    # })
+    # CLEMS
     # yield "MLkNN-MLPCC", MLPCC(SKMLWrapper(MLkNN()))
     # yield "MLkNN-MLACC", MLACC(MLkNN())
     # yield "MLkNN-MLPACC", MLPACC(MLkNN())
@@ -227,6 +251,24 @@ def models():
     # yield "MLTSVM-MLPCC", MLPCC(SKMLWrapper(MLTSVM()))
     # yield "MLTSVM-MLACC", MLACC(MLTSVM())
     # yield "MLTSVM-MLPACC", MLPACC(MLTSVM())
+
+    common={'protocol':'app', 'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False}
+    yield 'PCC-MRQ-MultitaskLasso', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MultiTaskLasso(normalize=True), **common), param_grid={
+        'alpha': np.linspace(0.001, 0.03, 5),
+    })
+    yield 'PCC-MRQ-Ridge', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=Ridge(normalize=True), **common), param_grid={
+        'alpha': [200, 235, 270, 300, 500],
+    })
+    yield 'PCC-MRQ-LinearRegression', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=LinearRegression(n_jobs=-1), **common)
+    yield 'PCC-MRQ-RandomForest', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RandomForestRegressor(n_jobs=-1), **common), param_grid={
+        "n_estimators": [10, 100, 200],
+    })
+    yield 'PCC-AdaBoostChain', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RegressorChain(AdaBoostRegressor()), **common), param_grid={
+        'n_estimators': [10, 50, 100, 200]
+    })
+    yield 'PCC-AdaBoostStack', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MLStackedRegressor(AdaBoostRegressor()), **common), param_grid={
+        'reg__n_estimators': [10, 50, 100, 200]
+    })
 
 
 
@@ -379,8 +421,6 @@ def run_experiment(dataset_name, model_name, model):
     # if train.n_classes>100:
     #     return
 
-    print_info(train, test)
-
     model.fit(train)
 
     results_npp = ml_natural_prevalence_prediction(model, test, sample_size, repeats=100)
@@ -390,7 +430,7 @@ def run_experiment(dataset_name, model_name, model):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Experiments for multi-label quantification')
-    parser.add_argument('--results', type=str, default='./results', metavar='str',
+    parser.add_argument('--results', type=str, default='./results_optimised', metavar='str',
                         help=f'path where to store the results')
     opt = parser.parse_args()
 

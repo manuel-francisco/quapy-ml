@@ -8,6 +8,8 @@ from quapy.functional import artificial_prevalence_sampling
 
 from skmultilearn.model_selection import iterative_train_test_split
 
+from scipy.sparse import issparse, vstack
+
 class MultilabelledCollection:
     def __init__(self, instances, labels):
         assert labels.ndim==2, f'data does not seem to be multilabel {labels}'
@@ -118,6 +120,20 @@ class MultilabelledCollection:
     @property
     def Xy(self):
         return self.instances, self.labels
+    
+    def __add__(self, other):
+        if other is None:
+            return self
+        elif issparse(self.instances) and issparse(other.instances):
+            join_instances = vstack([self.instances, other.instances])
+        elif isinstance(self.instances, list) and isinstance(other.instances, list):
+            join_instances = self.instances + other.instances
+        elif isinstance(self.instances, np.ndarray) and isinstance(other.instances, np.ndarray):
+            join_instances = np.concatenate([self.instances, other.instances])
+        else:
+            raise NotImplementedError('unsupported operation for collection types')
+        labels = np.concatenate([self.labels, other.labels])
+        return MultilabelledCollection(join_instances, labels)
 
 
 class MultilingualLabelledCollection:
