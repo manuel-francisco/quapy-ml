@@ -64,7 +64,7 @@ class SKMLWrapper:
 
 
 class MLEmbedding:
-    def __init__(self, embedder=CLEMS(qp.error.ae, False), regressor=RandomForestRegressor(n_estimators=10), classifier=MLkNN(k=5)):
+    def __init__(self, embedder=CLEMS(qp.error.ae, False, params=dict(n_jobs=6)), regressor=RandomForestRegressor(n_estimators=10, n_jobs=6), classifier=MLkNN(k=5)):
         self.embedder = embedder
         self.regressor = regressor
         self.classifier = classifier
