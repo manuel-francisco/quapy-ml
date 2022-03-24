@@ -125,8 +125,17 @@ class LabelledCollection:
 
     def artificial_sampling_index_generator(self, sample_size, n_prevalences=101, repeats=1):
         dimensions = self.n_classes
-        for prevs in artificial_prevalence_sampling(dimensions, n_prevalences, repeats):
-            yield self.sampling_index(sample_size, *prevs)
+        
+        if dimensions < 2 or self.counts()[1] < 1:
+            raise Exception("Error")
+        
+        cat_size = self.counts()[1]
+        max_reachable_prevalence = cat_size / sample_size
+
+        for request_prev in artificial_prevalence_sampling(dimensions, n_prevalences, repeats):
+            if request_prev <= max_reachable_prevalence:
+                yield self.sampling_index(sample_size, *[1-request_prev, request_prev])
+                # yield self.sampling_index(sample_size, request_prev)
 
     def natural_sampling_generator(self, sample_size, repeats=100):
         for _ in range(repeats):
