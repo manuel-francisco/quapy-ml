@@ -159,41 +159,47 @@ class GridSearchQ(BaseQuantifier):
 
             signal.signal(signal.SIGALRM, handler)
 
-        self.sout(f'starting optimization with n_jobs={n_jobs}')
-        self.param_scores_ = {}
-        self.best_score_ = None
-        some_timeouts = False
-        for values in itertools.product(*params_values):
-            params = dict({k: values[i] for i, k in enumerate(params_keys)})
-
-            if self.timeout > 0:
-                signal.alarm(self.timeout)
-
-            try:
-                # overrides default parameters with the parameters being explored at this iteration
-                model.set_params(**params)
-                model.fit(training)
-                true_prevalences, estim_prevalences = self.__generate_predictions(model, val_split)
-                score = self.error(true_prevalences, estim_prevalences)
-                self.sout(f'checking hyperparams={params} got {self.error.__name__} score {score:.5f}')
-                if self.best_score_ is None or score < self.best_score_:
-                    self.best_score_ = score
-                    self.best_params_ = params
-                    self.best_model_ = deepcopy(model)
-                self.param_scores_[str(params)] = score
+        # skip optimization for low prevalence *the magic number trick*
+        if training.n_classes < 2 or val_split.n_classes < 2 or training.counts()[1] < 5 or val_split.counts()[1] < 5:
+            self.sout(f'skipping model selection due to very low prevalence')
+            self.best_model_ = deepcopy(self.model)
+            self.refit = True # FIXME: ensure refit
+        else:
+            self.sout(f'starting optimization with n_jobs={n_jobs}')
+            self.param_scores_ = {}
+            self.best_score_ = None
+            some_timeouts = False
+            for values in itertools.product(*params_values):
+                params = dict({k: values[i] for i, k in enumerate(params_keys)})
 
                 if self.timeout > 0:
-                    signal.alarm(0)
-            except TimeoutError:
-                print(f'timeout reached for config {params}')
-                some_timeouts = True
+                    signal.alarm(self.timeout)
 
-        if self.best_score_ is None and some_timeouts:
-            raise TimeoutError('all jobs took more than the timeout time to end')
+                try:
+                    # overrides default parameters with the parameters being explored at this iteration
+                    model.set_params(**params)
+                    model.fit(training)
+                    true_prevalences, estim_prevalences = self.__generate_predictions(model, val_split)
+                    score = self.error(true_prevalences, estim_prevalences)
+                    self.sout(f'checking hyperparams={params} got {self.error.__name__} score {score:.5f}')
+                    if self.best_score_ is None or score < self.best_score_:
+                        self.best_score_ = score
+                        self.best_params_ = params
+                        self.best_model_ = deepcopy(model)
+                    self.param_scores_[str(params)] = score
 
-        self.sout(f'optimization finished: best params {self.best_params_} (score={self.best_score_:.5f})')
-        # model.set_params(**self.best_params_)
-        # self.best_model_ = deepcopy(model)
+                    if self.timeout > 0:
+                        signal.alarm(0)
+                except TimeoutError:
+                    print(f'timeout reached for config {params}')
+                    some_timeouts = True
+
+            if self.best_score_ is None and some_timeouts:
+                raise TimeoutError('all jobs took more than the timeout time to end')
+
+            self.sout(f'optimization finished: best params {self.best_params_} (score={self.best_score_:.5f})')
+            # model.set_params(**self.best_params_)
+            # self.best_model_ = deepcopy(model)
 
         if self.refit:
             self.sout(f'refitting on the whole development set')

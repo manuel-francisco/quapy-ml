@@ -101,6 +101,7 @@ def select_best(model, param_grid=None, n_jobs=-1, single=False):
             n_jobs=1,
             verbose=True,
             n_prevpoints=21,
+            protocol='app',
         )
     else:
         return MLGridSearchQ(
@@ -129,8 +130,9 @@ def models():
     # yield 'NaivePACCcal', MLNaiveAggregativeQuantifier(PACC(calibratedCls()))
     # yield 'NaiveACCit', MLNaiveAggregativeQuantifier(ACC(cls()))
     # yield 'NaivePACCit', MLNaiveAggregativeQuantifier(PACC(cls()))
-    # yield 'NaiveHDy', MLNaiveAggregativeQuantifier(HDy(cls()))
-    yield 'NaiveSLD', MLNaiveAggregativeQuantifier(EMQ(calibratedCls()))
+    yield 'NaiveHDy', MLNaiveAggregativeQuantifier(select_best(HDy(cls()), single=True))
+    yield 'NaiveSLD', MLNaiveAggregativeQuantifier(select_best(EMQ(calibratedCls()), single=True))
+    yield 'NaiveSLDNoCalibrado', MLNaiveAggregativeQuantifier(select_best(EMQ(cls()), single=True))
 
     # Multi-label Classification + Binary Quantification
     yield 'StackCC', select_best(MLCC(MLStackedClassifier(cls())))
@@ -164,7 +166,7 @@ def models():
     yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()), single=True)), **common)
     yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(ACC(cls()), single=True)), **common)
     yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PACC(cls()), single=True)), **common)
-    # yield 'MRQ-ACCit', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), **common)
+    # yield 'MRQ-ACCit', MLRegressionQuantification(MLNaiveQuantifier(ACC(cls())), alences=21,**common)
     # yield 'MRQ-PACCit', MLRegressionQuantification(MLNaiveQuantifier(PACC(cls())), **common)
 
     # Multi-label Classification + Multi-label Quantification

@@ -378,6 +378,12 @@ class EMQ(AggregativeProbabilisticQuantifier):
 
     def __init__(self, learner: BaseEstimator):
         self.learner = learner
+    
+    def get_params(self):
+        return self.learner.get_params()
+    
+    def set_params(self, **params):
+        return self.learner.set_params(**params)
 
     def fit(self, data: LabelledCollection, fit_learner=True):
         self.learner, _ = training_helper(self.learner, data, fit_learner, ensure_probabilistic=True)
@@ -431,6 +437,12 @@ class HDy(AggregativeProbabilisticQuantifier, BinaryQuantifier):
     def __init__(self, learner: BaseEstimator, val_split=0.4):
         self.learner = learner
         self.val_split = val_split
+    
+    def get_params(self):
+        return self.learner.get_params()
+    
+    def set_params(self, **params):
+        self.learner.set_params(**params)
 
     def fit(self, data: LabelledCollection, fit_learner=True, val_split: Union[float, LabelledCollection] = None):
         """
