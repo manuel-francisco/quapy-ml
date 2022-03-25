@@ -59,34 +59,6 @@ random.seed(seed)
 np.random.seed(seed)
 
 
-class SSLR:
-    def __init__(self, **params):
-        self.scaler = StandardScaler()
-        self.clf = LogisticRegression(max_iter=2000, solver='lbfgs', **params)
-    
-    def fit(self, X, y, **params):
-        return self.clf.fit(self.scaler.fit_transform(X), y, **params)
-    
-    def predict(self, X, **params):
-        return self.clf.predict(self.scaler.transform(X), **params)
-    
-    def predict_proba(self, X, **params):
-        return self.clf.predict_proba(self.scaler.transform(X), **params)
-    
-    def get_params(self, deep=True):
-        return self.clf.get_params(deep=deep)
-    
-    def set_params(self, **params):
-        self.clf.set_params(**params)
-    
-    @property
-    def classes_(self):
-        return self.clf.classes_
-
-# def cls():
-#     # return LinearSVC()
-#     return SSLR()
-
 def cls():
     return LogisticRegression(max_iter=2000, solver='lbfgs')
 
@@ -226,7 +198,7 @@ def get_dataset(dataset_name, dopickle=True):
                 yte = yte[:, selected]
         else:
             # remove categories without positives in the training or test splits
-            valid_categories = ytr.sum(axis=0) > 0
+            valid_categories = ytr.sum(axis=0) >= 5
             ytr = ytr[:, valid_categories]
             yte = yte[:, valid_categories]
 
@@ -237,7 +209,7 @@ def get_dataset(dataset_name, dopickle=True):
         yte = data.test_labelmatrix.todense().getA()
 
         # remove categories with < 20 training or test documents
-        to_keep = ytr.sum(axis=0) > 0
+        to_keep = ytr.sum(axis=0) >= 5
         # keep the 10 most populated categories
         # to_keep = np.argsort(ytr.sum(axis=0))[-10:]
         ytr = ytr[:, to_keep]
@@ -389,7 +361,7 @@ if __name__ == '__main__':
         repeats = 1
         repeats_grid = 1
         n_prevalences_grid = 101
-        if train.n_classes < 100:
+        if train.n_classes < 98:
             # DEFAULTS SMALL DATASETS
             n_prevalences = 101
             repeats = 25
@@ -402,7 +374,7 @@ if __name__ == '__main__':
         handcrafted_repeats = {
             "jrcall": 1,
             "delicious": 1,
-            "mediamill": 1,
+            "mediamill": 2,
             "birds": 40,
             "genbase": 50,
             "enron": 9,
@@ -415,7 +387,7 @@ if __name__ == '__main__':
             "Corel5k": 6,
             "emotions": 26,
             "yeast": 8,
-            "rcv1": 1,
+            "rcv1": 2,
         }
 
         if dataset_name in handcrafted_repeats.keys():
@@ -432,3 +404,30 @@ if __name__ == '__main__':
 
 
 
+class SSLR:
+    def __init__(self, **params):
+        self.scaler = StandardScaler()
+        self.clf = LogisticRegression(max_iter=2000, solver='lbfgs', **params)
+    
+    def fit(self, X, y, **params):
+        return self.clf.fit(self.scaler.fit_transform(X), y, **params)
+    
+    def predict(self, X, **params):
+        return self.clf.predict(self.scaler.transform(X), **params)
+    
+    def predict_proba(self, X, **params):
+        return self.clf.predict_proba(self.scaler.transform(X), **params)
+    
+    def get_params(self, deep=True):
+        return self.clf.get_params(deep=deep)
+    
+    def set_params(self, **params):
+        self.clf.set_params(**params)
+    
+    @property
+    def classes_(self):
+        return self.clf.classes_
+
+# def cls():
+#     # return LinearSVC()
+#     return SSLR()
