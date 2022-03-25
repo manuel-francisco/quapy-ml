@@ -108,48 +108,52 @@ TC_DATASETS = ['reuters21578', 'jrcall', 'ohsumed', 'rcv1']
 TC_DATASETS_REDUCED = ['rcv1', 'ohsumed']
 
 
-SPLIT1 = ['birds', 'emotions', 'enron', 'reuters21578', 'jrcall'] #icx
-SPLIT2 = ['genbase', 'mediamill', 'medical', 'Corel5k', 'bibtex',] #ilona
-SPLIT3 = ['scene', 'tmc2007_500', 'yeast', 'ohsumed', 'rcv1', 'delicious'] #amarna
+SPLITS = [
+    ['rcv1', 'mediamill', 'ohsumed', 'tmc2007_500', 'reuters21578'],
+    ['Corel5k', 'yeast', 'enron', 'delicious', 'jrcall'],
+    ['medical', 'scene', 'emotions', 'birds', 'bibtex', 'genbase'],
+]
 
 
-ALLTABLE = SKMULTILEARN_ALL_DATASETS + TC_DATASETS_REDUCED
+ALLTABLE = SKMULTILEARN_ALL_DATASETS + TC_DATASETS
 
 #DATASETS = ['reuters21578']
 COREL5K = ['Corel5k']
 
-def select_best(model, param_grid=None, n_jobs=-1, single=False):
-    if not param_grid:
-        param_grid = dict(
-            #C=np.array([1., 1.e-03, 1.e-02, 1.e-01, 1.e+01, 1.e+02, 1.e+03]), # np.logspace(-3, 3, 7) but with the 1. first
-            C=np.array([1., .01, 10, 100, 1000]), # np.logspace(-3, 3, 7) but with the 1. first
-            class_weight=["balanced", None],
-        )
+
+
+def models(n_prevalences=101, repeats=25): # CAMBIAR EN __main__
+    def select_best(model, param_grid=None, n_jobs=-1, single=False):
+        if not param_grid:
+            param_grid = dict(
+                #C=np.array([1., 1.e-03, 1.e-02, 1.e-01, 1.e+01, 1.e+02, 1.e+03]), # np.logspace(-3, 3, 7) but with the 1. first
+                C=np.array([1., 10, 100, 1000, .01]), # np.logspace(-3, 3, 7) but with the 1. first
+                class_weight=["balanced", None],
+            )
+        
+        if single:
+            return GridSearchQ(
+                model=model,
+                param_grid=param_grid,
+                sample_size=100,
+                n_jobs=1,
+                verbose=True,
+                n_prevpoints=n_prevalences,
+                protocol='app',
+                n_repetitions=repeats,
+            )
+        else:
+            return MLGridSearchQ(
+                model=model,
+                param_grid=param_grid,
+                sample_size=100,
+                n_jobs=n_jobs,
+                verbose=True,
+                n_prevalences=n_prevalences,
+                repeats=repeats,
+            )
     
-    if single:
-        return GridSearchQ(
-            model=model,
-            param_grid=param_grid,
-            sample_size=100,
-            n_jobs=1,
-            verbose=True,
-            n_prevpoints=101,
-            protocol='app',
-            n_repetitions=5,
-        )
-    else:
-        return MLGridSearchQ(
-            model=model,
-            param_grid=param_grid,
-            sample_size=100,
-            n_jobs=n_jobs,
-            verbose=True,
-            n_prevalences=101,
-            repeats=5,
-        )
 
-
-def models():
     common={'sample_size': sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
 
     # naives (Binary Classification + Binary Quantification)
@@ -217,20 +221,12 @@ def get_dataset(dataset_name, dopickle=True):
                     highest_index = order_ij[p]
                     class_i = highest_index // nC
                     class_j = highest_index % nC
-                    # if there is only one class to go, then add the most populated one
-                    most_populated, least_populated = (class_i, class_j) if tr_counts[class_i] > tr_counts[class_j] else (class_j, class_i)
-                    if te_counts[most_populated]>0:
-                        selected.add(most_populated)
-                    if len(selected) < TO_SELECT:
-                        if te_counts[least_populated]>0:
-                            selected.add(least_populated)
-                    p+=1
-                selected = np.asarray(sorted(selected))
+                    # if there is nested_test_indexesay(sorted(selected))
                 ytr = ytr[:,selected]
                 yte = yte[:, selected]
         else:
             # remove categories without positives in the training or test splits
-            valid_categories = np.logical_and(ytr.sum(axis=0)>5, yte.sum(axis=0)>5)
+            valid_categories = ytr.sum(axis=0) > 1
             ytr = ytr[:, valid_categories]
             yte = yte[:, valid_categories]
 
@@ -241,7 +237,7 @@ def get_dataset(dataset_name, dopickle=True):
         yte = data.test_labelmatrix.todense().getA()
 
         # remove categories with < 20 training or test documents
-        to_keep = np.logical_and(ytr.sum(axis=0)>=5, yte.sum(axis=0)>=5)
+        to_keep = ytr.sum(axis=0) > 1
         # keep the 10 most populated categories
         # to_keep = np.argsort(ytr.sum(axis=0))[-10:]
         ytr = ytr[:, to_keep]
@@ -284,14 +280,51 @@ def print_info(train, test):
     print(f'MLPE: {qp.error.mae(train.prevalence(), test.prevalence()):.5f}')
 
 
+# def save_results(npp_results, app_results, result_path, train_prevs):
+#     # results are lists of tuples of (true_prevs, estim_prevs)
+#     # each true_prevs is an ndarray of ndim=2, but the second dimension is constrained
+#     def _prepare_result_lot(lot_results):
+#         true_prevs, estim_prevs = lot_results
+#         return {
+#             'true_prevs': [true_i[:,0].flatten() for true_i in true_prevs],  # removes the constrained prevalence
+#             'estim_prevs': [estim_i[:,0].flatten() for estim_i in estim_prevs],  # removes the constrained prevalence
+#             'train_prevs' : train_prevs,
+#         }
+#     results = {
+#         'npp': _prepare_result_lot(npp_results),
+#         'app': _prepare_result_lot(app_results),
+#     }
+#     pickle.dump(results, open(result_path, 'wb'), pickle.HIGHEST_PROTOCOL)
+
+
+# def load_results(result_path):
+#     def _unpack_result_lot(lot_result):
+#         true_prevs = lot_result['true_prevs']
+#         true_prevs = [np.vstack([true_i, 1 - true_i]).T for true_i in true_prevs]  # add the constrained prevalence
+#         estim_prevs = lot_result['estim_prevs']
+#         estim_prevs = [np.vstack([estim_i, 1 - estim_i]).T for estim_i in estim_prevs]  # add the constrained prevalence
+#         train_prevs = lot_result["train_prevs"]
+#         return true_prevs, estim_prevs, train_prevs
+#     results = pickle.load(open(result_path, 'rb'))
+#     results = {
+#         'npp': _unpack_result_lot(results['npp']),
+#         'app': _unpack_result_lot(results['app']),
+#     }
+#     return results
+    # results_npp = _unpack_result_lot(results['npp'])
+    # results_app = _unpack_result_lot(results['app'])
+    # return results_npp, results_app
+
+
+
 def save_results(npp_results, app_results, result_path, train_prevs):
     # results are lists of tuples of (true_prevs, estim_prevs)
     # each true_prevs is an ndarray of ndim=2, but the second dimension is constrained
     def _prepare_result_lot(lot_results):
         true_prevs, estim_prevs = lot_results
         return {
-            'true_prevs': [true_i[:,0].flatten() for true_i in true_prevs],  # removes the constrained prevalence
-            'estim_prevs': [estim_i[:,0].flatten() for estim_i in estim_prevs],  # removes the constrained prevalence
+            'true_prevs': np.asarray([true_i[:,1].flatten() for true_i in true_prevs]),  # removes the constrained prevalence
+            'estim_prevs': np.asarray([estim_i[:,1].flatten() for estim_i in estim_prevs]),  # removes the constrained prevalence
             'train_prevs' : train_prevs,
         }
     results = {
@@ -304,9 +337,9 @@ def save_results(npp_results, app_results, result_path, train_prevs):
 def load_results(result_path):
     def _unpack_result_lot(lot_result):
         true_prevs = lot_result['true_prevs']
-        true_prevs = [np.vstack([true_i, 1 - true_i]).T for true_i in true_prevs]  # add the constrained prevalence
+        true_prevs = [np.vstack([1-true_i, true_i]).T for true_i in true_prevs]  # add the constrained prevalence
         estim_prevs = lot_result['estim_prevs']
-        estim_prevs = [np.vstack([estim_i, 1 - estim_i]).T for estim_i in estim_prevs]  # add the constrained prevalence
+        estim_prevs = [np.vstack([1-estim_i, estim_i]).T for estim_i in estim_prevs]  # add the constrained prevalence
         train_prevs = lot_result["train_prevs"]
         return true_prevs, estim_prevs, train_prevs
     results = pickle.load(open(result_path, 'rb'))
@@ -315,74 +348,85 @@ def load_results(result_path):
         'app': _unpack_result_lot(results['app']),
     }
     return results
-    # results_npp = _unpack_result_lot(results['npp'])
-    # results_app = _unpack_result_lot(results['app'])
-    # return results_npp, results_app
 
 
-def run_experiment(dataset_name, model_name, model):
+def run_experiment(dataset_name, train, test, model_name, model, n_prevalences=101, repeats=25):
     result_path = f'{opt.results}/{dataset_name}_{model_name}.pkl'
     if already_run(result_path):
         return
 
     print(f'runing experiment {dataset_name} x {model_name}')
-    train, test = get_dataset(dataset_name)
-    # if train.n_classes>100:
-    #     return
-
-    # m = np.dot(train.labels.T, train.labels)
-    # np.fill_diagonal(m, 0)
-    # single_labels = (m.sum(axis=0) == 0)
-
-    # singles = train.labels[:, single_labels]
-    # multis = train.labels[:, ~single_labels]
-
-    # scounts = singles.shape[1]
-    # mcounts = multis.shape[1]
-    # sc = singles.sum(axis=1).mean()
-    # mc = multis.sum(axis=1).mean()
-    # sd = sc / scounts
-    # md = mc / mcounts
-
-    # return scounts, sc, sd, mcounts, mc, md
-
-    # from scipy.sparse import issparse
-    # if issparse(train.instances):
-    #     print("sparse convert")
-    #     train.instances = train.instances.todense()
-    #     test.instances = test.instances.todense()
+    #train, test = get_dataset(dataset_name)
 
     model.fit(train)
 
-    sample_size = 100
 
-    results_npp = ml_natural_prevalence_prediction(model, test, sample_size, repeats=101*25)
-    results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=101, repeats=25)
+    results_npp = ml_natural_prevalence_prediction(model, test, sample_size, repeats=n_prevalences*repeats)
+    results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=n_prevalences, repeats=repeats)
     save_results(results_npp, results_app, result_path, train.prevalence())
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Experiments for multi-label quantification')
-    parser.add_argument('--results', type=str, default='./results_generales_C01', metavar='str',
+    parser.add_argument('--results', type=str, default='./results_generales', metavar='str',
                         help=f'path where to store the results')
     opt = parser.parse_args()
 
     os.makedirs(opt.results, exist_ok=True)
 
-    # records = []
-    # for datasetname in SKMULTILEARN_SMALL_DATASETS:
-    #     scounts, sc, sd, mcounts, mc, md = run_experiment(datasetname, 0, 0)
-    #     records.append(dict(dataset=datasetname, scounts=scounts, scardinality=sc, sdensity=sd, mcounts=mcounts, mcardinality=mc, mdensity=md))
-    # import pandas as pd
-    # pd.DataFrame.from_records(records)
 
+    # for datasetname, (modelname,model) in itertools.product(ALLTABLE[::-1], models()):
+    #     run_experiment(datasetname, modelname, model)
+    
+    with open("whoami.txt", 'r') as f:
+        who = f.readline().strip()
+        dataset_split = ["alex", "manolo", "amarna"].index(who)
 
-    for datasetname, (modelname,model) in itertools.product(SKMULTILEARN_SMALL_DATASETS, models()):
-        run_experiment(datasetname, modelname, model)
-    for datasetname, (modelname,model) in itertools.product(SKMULTILEARN_NOBIG_DATASETS, models()):
-        run_experiment(datasetname, modelname, model)
-    for datasetname, (modelname,model) in itertools.product(ALLTABLE, models()):
-        run_experiment(datasetname, modelname, model)
+    for dataset_name in SPLITS[dataset_split]:
+        train, test = get_dataset(dataset_name)
+        
+        # DEFAULTS
+        n_prevalences = 101
+        repeats = 1
+        repeats_grid = 1
+        n_prevalences_grid = 101
+        if train.n_classes < 100:
+            # DEFAULTS SMALL DATASETS
+            n_prevalences = 101
+            repeats = 25
+            repeats_grid = 5
+        elif train.n_classes > 500:
+            # DEFAULTS HUGE DATASETS
+            n_prevalences = 21
+            n_prevalences_grid = 21
+        
+        handcrafted_repeats = {
+            "jrcall": 1,
+            "delicious": 1,
+            "mediamill": 1,
+            "birds": 40,
+            "genbase": 50,
+            "enron": 9,
+            "ohsumed": 5,
+            "bibtex": 2,
+            "reuters21578":  6,
+            "tmc2007_500": 5,
+            "scene": 18,
+            "medical": 15,
+            "Corel5k": 6,
+            "emotions": 26,
+            "yeast": 8,
+            "rcv1": 1,
+        }
+
+        if dataset_name in handcrafted_repeats.keys():
+            repeats = handcrafted_repeats[dataset_name]
+        else:
+            print(f"EEEEEH debug: {dataset_name}")
+
+        for modelname, model in models(n_prevalences=n_prevalences_grid, repeats=repeats_grid):
+            run_experiment(dataset_name, train, test, modelname, model, n_prevalences, repeats)
+
     
 
 
