@@ -226,7 +226,7 @@ def get_dataset(dataset_name, dopickle=True):
                 yte = yte[:, selected]
         else:
             # remove categories without positives in the training or test splits
-            valid_categories = ytr.sum(axis=0) > 1
+            valid_categories = ytr.sum(axis=0) > 0
             ytr = ytr[:, valid_categories]
             yte = yte[:, valid_categories]
 
@@ -237,7 +237,7 @@ def get_dataset(dataset_name, dopickle=True):
         yte = data.test_labelmatrix.todense().getA()
 
         # remove categories with < 20 training or test documents
-        to_keep = ytr.sum(axis=0) > 1
+        to_keep = ytr.sum(axis=0) > 0
         # keep the 10 most populated categories
         # to_keep = np.argsort(ytr.sum(axis=0))[-10:]
         ytr = ytr[:, to_keep]
