@@ -265,15 +265,15 @@ class MLNaiveQuantifier(MLQuantifier):
         def cat_job(lc):
             return deepcopy(self.q).fit(lc)
         
-        def cat_job_with_mselection(args):
-            trsp, valsp = args
-            return deepcopy(self.q).fit(trsp, valsp)
+        # def cat_job_with_mselection(args):
+        #     trsp, valsp = args
+        #     return deepcopy(self.q).fit(trsp, valsp)
 
-        if hasattr(self.q, "best_model"):
-            trsp, valsp = data.train_test_split(train_prop=.6)
-            self.estimators = qp.util.parallel(cat_job_with_mselection, zip(trsp.genLabelledCollections(), valsp.genLabelledCollections()), n_jobs=self.n_jobs)
-        else:
-            self.estimators = qp.util.parallel(cat_job, data.genLabelledCollections(), n_jobs=self.n_jobs)
+        # if hasattr(self.q, "best_model"):
+        #     trsp, valsp = data.train_test_split(train_prop=.6)
+        #     self.estimators = qp.util.parallel(cat_job_with_mselection, zip(trsp.genLabelledCollections(), valsp.genLabelledCollections()), n_jobs=self.n_jobs)
+        # else:
+        self.estimators = qp.util.parallel(cat_job, data.genLabelledCollections(), n_jobs=self.n_jobs)
 
         return self
 

@@ -1,7 +1,11 @@
+from calendar import c
 import signal
 import traceback
 
 signal.signal(signal.SIGUSR1, lambda sig, stack: traceback.print_stack(stack))
+
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 
 
@@ -46,14 +50,44 @@ from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
 
 seed = 1
 random.seed(seed)
 np.random.seed(seed)
 
 
+class SSLR:
+    def __init__(self, **params):
+        self.scaler = StandardScaler()
+        self.clf = LogisticRegression(max_iter=2000, solver='lbfgs', **params)
+    
+    def fit(self, X, y, **params):
+        return self.clf.fit(self.scaler.fit_transform(X), y, **params)
+    
+    def predict(self, X, **params):
+        return self.clf.predict(self.scaler.transform(X), **params)
+    
+    def predict_proba(self, X, **params):
+        return self.clf.predict_proba(self.scaler.transform(X), **params)
+    
+    def get_params(self, deep=True):
+        return self.clf.get_params(deep=deep)
+    
+    def set_params(self, **params):
+        self.clf.set_params(**params)
+    
+    @property
+    def classes_(self):
+        return self.clf.classes_
+
+# def cls():
+#     # return LinearSVC()
+#     return SSLR()
+
 def cls():
-    # return LinearSVC()
     return LogisticRegression(max_iter=2000, solver='lbfgs')
 
 
@@ -87,8 +121,9 @@ COREL5K = ['Corel5k']
 def select_best(model, param_grid=None, n_jobs=-1, single=False):
     if not param_grid:
         param_grid = dict(
-            C=np.logspace(-3, 3, 7),
-            class_weight=[None, "balanced"],
+            #C=np.array([1., 1.e-03, 1.e-02, 1.e-01, 1.e+01, 1.e+02, 1.e+03]), # np.logspace(-3, 3, 7) but with the 1. first
+            C=np.array([1., .01, 10, 100, 1000]), # np.logspace(-3, 3, 7) but with the 1. first
+            class_weight=["balanced", None],
         )
     
     if single:
@@ -97,9 +132,10 @@ def select_best(model, param_grid=None, n_jobs=-1, single=False):
             param_grid=param_grid,
             sample_size=100,
             n_jobs=1,
-            verbose=False,
-            n_prevpoints=21,
+            verbose=True,
+            n_prevpoints=101,
             protocol='app',
+            n_repetitions=5,
         )
     else:
         return MLGridSearchQ(
@@ -107,7 +143,9 @@ def select_best(model, param_grid=None, n_jobs=-1, single=False):
             param_grid=param_grid,
             sample_size=100,
             n_jobs=n_jobs,
-            verbose=False,
+            verbose=True,
+            n_prevalences=101,
+            repeats=5,
         )
 
 
@@ -119,28 +157,27 @@ def models():
     yield 'NaivePCC', MLNaiveAggregativeQuantifier(select_best(PCC(cls()), single=True))
     yield 'NaiveACC', MLNaiveAggregativeQuantifier(select_best(ACC(cls()), single=True))
     yield 'NaivePACC', MLNaiveAggregativeQuantifier(select_best(PACC(cls()), single=True))
-    yield 'NaiveHDy', MLNaiveAggregativeQuantifier(select_best(HDy(cls()), single=True))
-    yield 'NaiveSLDNoCalibrado', MLNaiveAggregativeQuantifier(select_best(EMQ(cls()), single=True))
-    yield 'NaiveSLD', MLNaiveAggregativeQuantifier(select_best(EMQ(calibratedCls()), param_grid=dict(
-            base_estimator__C=np.logspace(-3, 3, 7),
-            base_estimator__class_weight=[None, "balanced"],
-        ), single=True))
+    # yield 'NaiveHDy', MLNaiveAggregativeQuantifier(select_best(HDy(cls()), single=True))
+    # yield 'NaiveSLDNoCalibrado', MLNaiveAggregativeQuantifier(select_best(EMQ(cls()), single=True))
+    # yield 'NaiveSLD', MLNaiveAggregativeQuantifier(select_best(EMQ(calibratedCls()), param_grid=dict(
+    #         base_estimator__C=np.array([1., 1.e-03, 1.e-02, 1.e-01, 1.e+01, 1.e+02, 1.e+03]),
+    #         base_estimator__class_weight=["balanced", None],
+    #     ), single=True))
 
-    # yield 'ss100-StackCC', select_best(MLCC(MLStackedClassifier(cls())))
-    # yield 'ss100-StackPCC', select_best(MLPCC(MLStackedClassifier(cls())))
-    # yield 'ss100-StackACC', select_best(MLACC(MLStackedClassifier(cls())))
-    # yield 'ss100-StackPACC', select_best(MLPACC(MLStackedClassifier(cls())))
+    yield 'StackCC', select_best(MLCC(MLStackedClassifier(cls())))
+    yield 'StackPCC', select_best(MLPCC(MLStackedClassifier(cls())))
+    yield 'StackACC', select_best(MLACC(MLStackedClassifier(cls())))
+    yield 'StackPACC', select_best(MLPACC(MLStackedClassifier(cls())))
 
     common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
-    # yield 'ss100-MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(select_best(CC(cls()), single=True)), **common)
-    # yield 'ss100-MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()), single=True)), **common)
-    # yield 'ss100-MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(ACC(cls()), single=True)), **common)
-    # yield 'ss100-MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PACC(cls()), single=True)), **common)
-
-    # yield 'ss100-MRQ-StackCC', MLRegressionQuantification(select_best(MLCC(MLStackedClassifier(cls()))), **common)
-    # yield 'ss100-MRQ-StackPCC', MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), **common)
-    # yield 'ss100-MRQ-StackACC', MLRegressionQuantification(select_best(MLACC(MLStackedClassifier(cls()))), **common)
-    # yield 'ss100-MRQ-StackPACC', MLRegressionQuantification(select_best(MLPACC(MLStackedClassifier(cls()))), **common)
+    yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(select_best(CC(cls()), single=True)), **common)
+    yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()), single=True)), **common)
+    yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(ACC(cls()), single=True)), **common)
+    yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PACC(cls()), single=True)), **common)
+    yield 'MRQ-StackCC', MLRegressionQuantification(select_best(MLCC(MLStackedClassifier(cls()))), **common)
+    yield 'MRQ-StackPCC', MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), **common)
+    yield 'MRQ-StackACC', MLRegressionQuantification(select_best(MLACC(MLStackedClassifier(cls()))), **common)
+    yield 'MRQ-StackPACC', MLRegressionQuantification(select_best(MLPACC(MLStackedClassifier(cls()))), **common)
 
 
 
@@ -293,25 +330,60 @@ def run_experiment(dataset_name, model_name, model):
     # if train.n_classes>100:
     #     return
 
+    # m = np.dot(train.labels.T, train.labels)
+    # np.fill_diagonal(m, 0)
+    # single_labels = (m.sum(axis=0) == 0)
+
+    # singles = train.labels[:, single_labels]
+    # multis = train.labels[:, ~single_labels]
+
+    # scounts = singles.shape[1]
+    # mcounts = multis.shape[1]
+    # sc = singles.sum(axis=1).mean()
+    # mc = multis.sum(axis=1).mean()
+    # sd = sc / scounts
+    # md = mc / mcounts
+
+    # return scounts, sc, sd, mcounts, mc, md
+
+    # from scipy.sparse import issparse
+    # if issparse(train.instances):
+    #     print("sparse convert")
+    #     train.instances = train.instances.todense()
+    #     test.instances = test.instances.todense()
+
     model.fit(train)
 
     sample_size = 100
 
-    results_npp = ml_natural_prevalence_prediction(model, test, sample_size, repeats=100)
-    results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=21, repeats=100)
+    results_npp = ml_natural_prevalence_prediction(model, test, sample_size, repeats=101*25)
+    results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=101, repeats=25)
     save_results(results_npp, results_app, result_path, train.prevalence())
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Experiments for multi-label quantification')
-    parser.add_argument('--results', type=str, default='./results_pruebas_COREL', metavar='str',
+    parser.add_argument('--results', type=str, default='./results_generales_C01', metavar='str',
                         help=f'path where to store the results')
     opt = parser.parse_args()
 
     os.makedirs(opt.results, exist_ok=True)
 
+    # records = []
+    # for datasetname in SKMULTILEARN_SMALL_DATASETS:
+    #     scounts, sc, sd, mcounts, mc, md = run_experiment(datasetname, 0, 0)
+    #     records.append(dict(dataset=datasetname, scounts=scounts, scardinality=sc, sdensity=sd, mcounts=mcounts, mcardinality=mc, mdensity=md))
+    # import pandas as pd
+    # pd.DataFrame.from_records(records)
+
+
     for datasetname, (modelname,model) in itertools.product(SKMULTILEARN_SMALL_DATASETS, models()):
         run_experiment(datasetname, modelname, model)
+    for datasetname, (modelname,model) in itertools.product(SKMULTILEARN_NOBIG_DATASETS, models()):
+        run_experiment(datasetname, modelname, model)
+    for datasetname, (modelname,model) in itertools.product(ALLTABLE, models()):
+        run_experiment(datasetname, modelname, model)
+    
 
 
 
