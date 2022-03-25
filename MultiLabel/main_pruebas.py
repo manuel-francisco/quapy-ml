@@ -94,8 +94,8 @@ def cls():
 def calibratedCls():
     return CalibratedClassifierCV(cls())
 
-sample_size = 5000 #MIRAR run_experiment
-n_samples = 100 #MIRAR run_experiment
+sample_size = 100 #MIRAR run_experiment
+n_samples = 5000 #MIRAR run_experiment
 
 picklepath = 'pickles_manuel'
 
@@ -127,7 +127,7 @@ def models(n_prevalences=101, repeats=25): # CAMBIAR EN __main__
         if not param_grid:
             param_grid = dict(
                 #C=np.array([1., 1.e-03, 1.e-02, 1.e-01, 1.e+01, 1.e+02, 1.e+03]), # np.logspace(-3, 3, 7) but with the 1. first
-                C=np.array([1., 10, 100, 1000, .01]), # np.logspace(-3, 3, 7) but with the 1. first
+                C=np.array([1., 10, 100, 1000, .1]), # np.logspace(-3, 3, 7) but with the 1. first
                 class_weight=["balanced", None],
             )
         
@@ -359,7 +359,6 @@ def run_experiment(dataset_name, train, test, model_name, model, n_prevalences=1
     #train, test = get_dataset(dataset_name)
 
     model.fit(train)
-
 
     results_npp = ml_natural_prevalence_prediction(model, test, sample_size, repeats=n_prevalences*repeats)
     results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=n_prevalences, repeats=repeats)
