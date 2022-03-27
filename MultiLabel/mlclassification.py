@@ -181,7 +181,7 @@ class MLStackedClassifier:  # aka Funnelling Monolingual
         self.meta.set_params(**params)
 
     def get_params(self, deep=True):
-        return self.base.get_params()
+        return self.meta.get_params()
 
 
 class MLStackedRegressor:
