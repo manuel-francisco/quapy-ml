@@ -11,11 +11,11 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import argparse
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.ensemble import AdaBoostRegressor, RandomForestClassifier
+from sklearn.ensemble import AdaBoostRegressor, RandomForestClassifier, StackingClassifier
 from sklearn.linear_model import LogisticRegression, MultiTaskLasso
 import itertools
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multioutput import ClassifierChain, RegressorChain
+from sklearn.multioutput import ClassifierChain, MultiOutputClassifier, RegressorChain
 from sklearn.neighbors import RadiusNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -94,7 +94,7 @@ COREL5K = ['Corel5k']
 
 
 
-def models(n_prevalences=101, repeats=25): # CAMBIAR EN __main__
+def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
     def select_best(model, param_grid=None, n_jobs=-1, single=False):
         if not param_grid:
             param_grid = dict(
@@ -126,34 +126,85 @@ def models(n_prevalences=101, repeats=25): # CAMBIAR EN __main__
             )
     
 
-    common={'sample_size': sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
+    if subset == "general" or subset == "all":
+        common={'sample_size': sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
 
-    # naives (Binary Classification + Binary Quantification)
-    yield 'NaiveCC', MLNaiveAggregativeQuantifier(select_best(CC(cls()), single=True))
-    yield 'NaivePCC', MLNaiveAggregativeQuantifier(select_best(PCC(cls()), single=True))
-    yield 'NaiveACC', MLNaiveAggregativeQuantifier(select_best(ACC(cls()), single=True))
-    yield 'NaivePACC', MLNaiveAggregativeQuantifier(select_best(PACC(cls()), single=True))
-    # yield 'NaiveHDy', MLNaiveAggregativeQuantifier(select_best(HDy(cls()), single=True))
-    # yield 'NaiveSLDNoCalibrado', MLNaiveAggregativeQuantifier(select_best(EMQ(cls()), single=True))
-    # yield 'NaiveSLD', MLNaiveAggregativeQuantifier(select_best(EMQ(calibratedCls()), param_grid=dict(
-    #         base_estimator__C=np.array([1., 1.e-03, 1.e-02, 1.e-01, 1.e+01, 1.e+02, 1.e+03]),
-    #         base_estimator__class_weight=["balanced", None],
-    #     ), single=True))
+        # naives (Binary Classification + Binary Quantification)
+        yield 'NaiveCC', MLNaiveAggregativeQuantifier(select_best(CC(cls()), single=True))
+        yield 'NaivePCC', MLNaiveAggregativeQuantifier(select_best(PCC(cls()), single=True))
+        yield 'NaiveACC', MLNaiveAggregativeQuantifier(select_best(ACC(cls()), single=True))
+        yield 'NaivePACC', MLNaiveAggregativeQuantifier(select_best(PACC(cls()), single=True))
+        # yield 'NaiveHDy', MLNaiveAggregativeQuantifier(select_best(HDy(cls()), single=True))
+        # yield 'NaiveSLDNoCalibrado', MLNaiveAggregativeQuantifier(select_best(EMQ(cls()), single=True))
+        # yield 'NaiveSLD', MLNaiveAggregativeQuantifier(select_best(EMQ(calibratedCls()), param_grid=dict(
+        #         base_estimator__C=np.array([1., 1.e-03, 1.e-02, 1.e-01, 1.e+01, 1.e+02, 1.e+03]),
+        #         base_estimator__class_weight=["balanced", None],
+        #     ), single=True))
 
-    yield 'StackCC', select_best(MLCC(MLStackedClassifier(cls())))
-    yield 'StackPCC', select_best(MLPCC(MLStackedClassifier(cls())))
-    yield 'StackACC', select_best(MLACC(MLStackedClassifier(cls())))
-    yield 'StackPACC', select_best(MLPACC(MLStackedClassifier(cls())))
+        yield 'StackCC', select_best(MLCC(MLStackedClassifier(cls())))
+        yield 'StackPCC', select_best(MLPCC(MLStackedClassifier(cls())))
+        yield 'StackACC', select_best(MLACC(MLStackedClassifier(cls())))
+        yield 'StackPACC', select_best(MLPACC(MLStackedClassifier(cls())))
 
-    common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
-    yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(select_best(CC(cls()), single=True)), **common)
-    yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()), single=True)), **common)
-    yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(ACC(cls()), single=True)), **common)
-    yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PACC(cls()), single=True)), **common)
-    yield 'MRQ-StackCC', MLRegressionQuantification(select_best(MLCC(MLStackedClassifier(cls()))), **common)
-    yield 'MRQ-StackPCC', MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), **common)
-    yield 'MRQ-StackACC', MLRegressionQuantification(select_best(MLACC(MLStackedClassifier(cls()))), **common)
-    yield 'MRQ-StackPACC', MLRegressionQuantification(select_best(MLPACC(MLStackedClassifier(cls()))), **common)
+        common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
+        yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(select_best(CC(cls()), single=True)), **common)
+        yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()), single=True)), **common)
+        yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(ACC(cls()), single=True)), **common)
+        yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PACC(cls()), single=True)), **common)
+        yield 'MRQ-StackCC', MLRegressionQuantification(select_best(MLCC(MLStackedClassifier(cls()))), **common)
+        yield 'MRQ-StackPCC', MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), **common)
+        yield 'MRQ-StackACC', MLRegressionQuantification(select_best(MLACC(MLStackedClassifier(cls()))), **common)
+        yield 'MRQ-StackPACC', MLRegressionQuantification(select_best(MLPACC(MLStackedClassifier(cls()))), **common)
+    
+    if subset == "mlc" or subset == "all":
+        #MLC experiments
+        yield "MLkNN-MLPCC", select_best(MLPCC(SKMLWrapper(MLkNN())), param_grid={
+            'k': range(1,10,2), 's': [0.5, 0.7, 1.0]
+        })
+        yield 'ChainPCC', select_best(MLPCC(ClassifierChain(cls())), param_grid={
+            'base_estimator__C': np.logspace(-3, 3, 7),
+            'base_estimator__class_weight': [None, "balanced"],
+        })
+        yield 'CLEMS-PCC', select_best(MLPCC(MLEmbedding()), param_grid={
+            'regressor__n_estimators': [10, 20, 50],
+            'classifier__k': range(1, 10, 2),
+            'classifier__s': [.5, .7, 1.],
+        }, n_jobs=1)
+        yield 'LClusterer-PCC', select_best(MLPCC(MLLabelClusterer()), param_grid={
+            # 'classifier__k': range(1,10,2),
+            # 'classifier__s': [0.5, 0.7, 1.0],
+            'clusterer__n_clusters': [2, 3, 5, 10, 50, 100],
+        }, n_jobs=6)
+        yield 'DT-PCC', select_best(MLPCC(DecisionTreeClassifier()), param_grid={
+            'criterion': ["gini", "entropy"],
+            #'classifier__class_weight': [None, "balanced"],
+        })
+        yield 'RF-PCC', select_best(MLPCC(RandomForestClassifier(n_jobs=6)), param_grid={
+            'n_estimators': [10, 100, 200],
+            #'classifier__criterion': ["gini", "entropy"],
+        }, n_jobs=1)
+    
+
+    if subset == "mlq" or subset == "all":
+        common={'protocol':'app', 'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False}
+        yield 'MRQ-MultitaskLasso', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MultiTaskLasso(normalize=True), **common), param_grid={
+            'alpha': np.linspace(0.001, 0.03, 5),
+        })
+        yield 'MRQ-Ridge', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=Ridge(normalize=True), **common), param_grid={
+            'alpha': [200, 235, 270, 300, 500],
+        })
+        yield 'MRQ-LinearRegression', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=LinearRegression(n_jobs=-1), **common)
+        yield 'MRQ-RandomForest', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RandomForestRegressor(n_jobs=6), **common), param_grid={
+            "n_estimators": [10, 100, 200],
+        }, n_jobs=1)
+        yield 'MRQ-AdaBoostChain', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RegressorChain(AdaBoostRegressor()), **common), param_grid={
+            'n_estimators': [10, 50, 100, 200]
+        })
+        yield 'MRQ-AdaBoostStack', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MLStackedRegressor(AdaBoostRegressor()), **common), param_grid={
+            'reg__n_estimators': [10, 50, 100, 200]
+        })
+
+    return None
 
 
 
@@ -341,6 +392,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Experiments for multi-label quantification')
     parser.add_argument('--results', type=str, default='./results_generales', metavar='str',
                         help=f'path where to store the results')
+    parser.add_argument('--subset', type=str, default="mlc", metavar="str",
+                        help="subset of models to run, default: general, options: [general, mlc, mlq, all]")
     opt = parser.parse_args()
 
     os.makedirs(opt.results, exist_ok=True)
@@ -397,11 +450,12 @@ if __name__ == '__main__':
         else:
             print(f"There was not any particular number of repeats for dataset {dataset_name}, using defaults ({repeats}).")
 
-        for modelname, model in models(n_prevalences=n_prevalences_grid, repeats=repeats_grid):
+        for modelname, model in models(opt.subset, n_prevalences=n_prevalences_grid, repeats=repeats_grid):
             try:
                 run_experiment(dataset_name, train, test, modelname, model, n_prevalences, repeats)
-            except:
+            except Exception as e:
                 print(f"Well there was some problem with {dataset_name} x {modelname}")
+                print(e)
 
     
 
