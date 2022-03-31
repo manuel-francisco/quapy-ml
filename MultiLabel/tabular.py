@@ -158,7 +158,7 @@ class Table:
     def _addave(self):
         ave = Table(['ave'], self.methods, lower_is_better=self.lower_is_better, significance_test=self.ttest, average=False,
                     missing=self.missing, missing_str=self.missing_str, prec_mean=self.prec_mean, prec_std=self.prec_std,
-                    show_std=self.show_std)
+                    show_std=self.show_std, clean_zero=self.clean_zero)
         for col in self.methods:
             values = None
             if self._is_column_full(col):
@@ -267,7 +267,7 @@ class Table:
             tab += 'Average & '
             tab += self.latexAverage()
         return tab
-
+    
     def latexTabularT(self, benchmark_replace={}, method_replace={}, average=True, side=False):
         def withside(label):
             return '\side{'+label+'}' if side else label
@@ -304,7 +304,7 @@ class Table:
             return self.average.latexRow('ave', endl=endl)
 
     def getRankTable(self):
-        t = Table(benchmarks=self.benchmarks, methods=self.methods, prec_mean=0, average=True)
+        t = Table(benchmarks=self.benchmarks, methods=self.methods, prec_mean=self.prec_mean, average=True)
         for rid, cid in self._getfilled():
             row = self.benchmarks[rid]
             col = self.methods[cid]
@@ -321,6 +321,49 @@ class Table:
         self.methods = new_methods
         self.method_index = new_index
         self.touch()
+
+
+
+class MultiMethodTable:
+    def __init__(self, benchmarks, methods, bins=["low drift", "mid drift", "high drift"], **params):
+        self.bins = bins
+        self.nbins = len(self.bins)
+        self.benchmarks = benchmarks
+        self.methods = methods
+        self.tables_ = [Table(benchmarks, methods, **params) for _ in range(self.nbins)]
+    
+    def add(self, benchmark, method, drift_bin, values):
+        tab = self.tables_[drift_bin]
+        tab.add(benchmark, method, values)
+    
+    def latexTabular(self, benchmark_replace={}, method_replace={}, average=True):
+        tab = ""
+        for i in range(self.nbins):
+            tab += f" & \multicolumn{{{len(self.methods)}}}{{c}}{{{self.bins[i]}}}"
+        tab += "\\\\\n"
+
+        for i in range(self.nbins):
+            tab += f"\cmidrule(lr){{{i*len(self.methods) + 2}-{(i+1)*len(self.methods) + 1}}} "
+
+        tab += "\n"
+
+        for i in range(self.nbins):
+            tab += " & " + " & ".join([method_replace.get(m, m) for m in self.methods])
+        tab += '\\\\\midrule\n'
+
+        for row in self.benchmarks:
+            rowname = benchmark_replace.get(row, row)
+            tab += rowname + ' & '
+            
+            trows = [[self.tables_[bin].latexCell(row, col) for col in self.methods] for bin in range(self.nbins)]
+            tab += " & ".join(list(itertools.chain.from_iterable(trows))) + " \\\\\n"
+        
+        tab += '\midrule\nAverage & '
+
+        tavg = [[self.tables_[bin].average.latexCell("ave", col) for col in self.methods] for bin in range(self.nbins)]
+        tab += " & ".join(list(itertools.chain.from_iterable(tavg))) + " \\\\\n"
+
+        return tab
 
 
 def pval_interpretation(p_val):

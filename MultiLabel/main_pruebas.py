@@ -54,7 +54,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 
-seed = 1
+seed = 42
 random.seed(seed)
 np.random.seed(seed)
 
@@ -197,7 +197,7 @@ def get_dataset(dataset_name, dopickle=True):
                 ytr = ytr[:,selected]
                 yte = yte[:, selected]
         else:
-            # remove categories without positives in the training or test splits
+            # remove categories without positives in the training
             valid_categories = ytr.sum(axis=0) >= 5
             ytr = ytr[:, valid_categories]
             yte = yte[:, valid_categories]
@@ -208,7 +208,7 @@ def get_dataset(dataset_name, dopickle=True):
         ytr = data.devel_labelmatrix.todense().getA()
         yte = data.test_labelmatrix.todense().getA()
 
-        # remove categories with < 20 training or test documents
+        # remove categories with < 5 training documents
         to_keep = ytr.sum(axis=0) >= 5
         # keep the 10 most populated categories
         # to_keep = np.argsort(ytr.sum(axis=0))[-10:]
@@ -353,9 +353,11 @@ if __name__ == '__main__':
         who = f.readline().strip()
         dataset_split = ["alex", "manolo", "amarna"].index(who)
 
+    # import pandas as pd
+    # records = []
     for dataset_name in SPLITS[dataset_split]:
         train, test = get_dataset(dataset_name)
-        
+
         # DEFAULTS
         n_prevalences = 101
         repeats = 1
@@ -393,41 +395,52 @@ if __name__ == '__main__':
         if dataset_name in handcrafted_repeats.keys():
             repeats = handcrafted_repeats[dataset_name]
         else:
-            print(f"EEEEEH debug: {dataset_name}")
+            print(f"There was not any particular number of repeats for dataset {dataset_name}, using defaults ({repeats}).")
 
         for modelname, model in models(n_prevalences=n_prevalences_grid, repeats=repeats_grid):
-            run_experiment(dataset_name, train, test, modelname, model, n_prevalences, repeats)
+            try:
+                run_experiment(dataset_name, train, test, modelname, model, n_prevalences, repeats)
+            except:
+                print(f"Well there was some problem with {dataset_name} x {modelname}")
 
     
 
+    #     stacked = np.vstack([train.labels, test.labels])
+    #     combinations = pd.DataFrame(stacked).value_counts()
+    #     ldiv = len(combinations)
+    #     puniq = (combinations == 1).sum()
+    #     pmax = combinations.iloc[0]
+    #     records.append({
+    #         "dataset": dataset_name,
+    #         "train_size": train.instances.shape[0],
+    #         "test_size": test.instances.shape[0],
+    #         "n_labels": train.labels.shape[1],
+    #         "cardinality": np.mean(np.sum(stacked, axis=1)),
+    #         "density": np.mean(np.sum(stacked, axis=1)) / train.labels.shape[1],
+    #         "diversity": ldiv,
+    #         "normdiversity": ldiv / train.labels.shape[1],
+    #         "puniq": puniq / train.instances.shape[0],
+    #         "pmax": pmax / train.instances.shape[0],
+    #     })
+    #     continue
+    
+    # df = pd.DataFrame.from_records(records).sort_values("dataset")
 
 
-
-
-class SSLR:
-    def __init__(self, **params):
-        self.scaler = StandardScaler()
-        self.clf = LogisticRegression(max_iter=2000, solver='lbfgs', **params)
-    
-    def fit(self, X, y, **params):
-        return self.clf.fit(self.scaler.fit_transform(X), y, **params)
-    
-    def predict(self, X, **params):
-        return self.clf.predict(self.scaler.transform(X), **params)
-    
-    def predict_proba(self, X, **params):
-        return self.clf.predict_proba(self.scaler.transform(X), **params)
-    
-    def get_params(self, deep=True):
-        return self.clf.get_params(deep=deep)
-    
-    def set_params(self, **params):
-        self.clf.set_params(**params)
-    
-    @property
-    def classes_(self):
-        return self.clf.classes_
-
-# def cls():
-#     # return LinearSVC()
-#     return SSLR()
+#          dataset  train_size  test_size  n_labels  cardinality   density  diversity  normdiversity     puniq      pmax
+# 0        Corel5k        4500        500       292     3.480000  0.011918       3113      10.660959  0.542889  0.012222
+# 1         bibtex        4880       2515       159     2.401893  0.015106       2856      17.962264  0.450615  0.096516
+# 2          birds         322        323        17     0.990698  0.058276        124       7.294118  0.204969  0.931677
+# 3      delicious       12920       3185       983    19.019994  0.019349      15806      16.079349  1.210681  0.001471
+# 4       emotions         391        202         6     1.868465  0.311411         27       4.500000  0.010230  0.207161
+# 5          enron        1123        579        45     3.357227  0.074605        734      16.311111  0.490650  0.146928
+# 6        genbase         463        199        18     1.219033  0.067724         23       1.277778  0.006479  0.369330
+# 13        jrcall       13137       7233      1797     5.140501  0.002861      14560       8.102393  0.943823  0.019563
+# 7      mediamill       30993      12914       100     4.374268  0.043743       6548      65.480000  0.132191  0.076243
+# 8        medical         333        645        18     1.134969  0.063054         50       2.777778  0.033033  0.495495
+# 14       ohsumed       24061      10328        23     1.657041  0.072045       1901      82.652174  0.041062  0.119530
+# 15          rcv1       23149     781265        98     3.199423  0.032647      14820     151.224490  0.344983  2.323167
+# 12  reuters21578        9603       3299        72     1.028988  0.014291        447       6.208333  0.027804  0.408518
+# 9          scene        1211       1196         6     1.073951  0.178992         15       2.500000  0.002477  0.334434
+# 10   tmc2007_500       21519       7077        22     2.219611  0.100891       1172      53.272727  0.018960  0.115433
+# 11         yeast        1500        917        14     4.237071  0.302648        198      14.142857  0.051333  0.158000

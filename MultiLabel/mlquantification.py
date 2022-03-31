@@ -275,6 +275,12 @@ class MLNaiveQuantifier(MLQuantifier):
         # else:
         self.estimators = qp.util.parallel(cat_job, data.genLabelledCollections(), n_jobs=self.n_jobs)
 
+        # DEBUG: sequential run
+        # self.estimators = []
+        # for i, lc in enumerate(data.genLabelledCollections()):
+        #     print(f"cat {i}")
+        #     self.estimators.append(deepcopy(self.q).fit(lc))
+
         return self
 
     def quantify(self, instances):
@@ -285,16 +291,9 @@ class MLNaiveQuantifier(MLQuantifier):
         return np.asarray([neg_prevs, pos_prevs]).T
     
     def set_params(self, **parameters):
-        if self.estimators:
-            for q in self.estimators:
-                q.set_params(**parameters)
-        else:
-            self.q.set_params(**parameters)
+        self.q.set_params(**parameters)
 
     def get_params(self, deep=True):
-        if self.estimators:
-            return self.estimators[0].get_params()
-        
         return self.q.get_params()
 
 
@@ -421,7 +420,7 @@ class MLRegressionQuantification:
 
     def fit(self, data:MultilabelledCollection):
         self.classes_ = data.classes_
-        tr, val = data.train_test_split()
+        tr, val = data.train_test_split(force_min_pos=2)
         assert all(tr.counts()>0), f'this is not gonna work, {tr.counts()}'
         self.estimator.fit(tr)
         if self.protocol == 'npp':

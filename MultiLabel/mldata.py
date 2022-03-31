@@ -9,6 +9,7 @@ from quapy.functional import artificial_prevalence_sampling
 from skmultilearn.model_selection import iterative_train_test_split
 
 from scipy.sparse import issparse, vstack
+import random
 
 class MultilabelledCollection:
     def __init__(self, instances, labels):
@@ -70,13 +71,54 @@ class MultilabelledCollection:
         labels = self.labels[index]
         return MultilabelledCollection(documents, labels)
 
-    def train_test_split(self, train_prop=0.6, random_state=None, iterative=True):
+    def train_test_split(self, train_prop=0.6, random_state=None, iterative=True, force_min_pos=0):
         if iterative:
             tr_docs, tr_labels, te_docs, te_labels = \
                 iterative_train_test_split(self.instances, self.labels, test_size=1-train_prop)
         else:
             tr_docs, te_docs, tr_labels, te_labels = \
                 train_test_split(self.instances, self.labels, train_size=train_prop, random_state=random_state)
+        
+
+        # enforce that there are at least {force_min_pos} per category in train
+        # this is a very particular case to deal with unstratified splits
+        if force_min_pos > 0:
+            # efficient np.delete for scipy.sparse
+            # https://stackoverflow.com/a/26504995
+            def sparse_delete(mat, idx):
+                idx = list(idx)
+                mask = np.ones(mat.shape[0], dtype=bool)
+                mask[idx] = False
+                return mat[mask, :]
+
+            # needs to be in a loop because moving instances can also result in a change of counts
+            tr_counts = tr_labels.sum(axis=0)
+            cats = np.argwhere(tr_counts < force_min_pos)
+            while cats.any():
+                cat = cats[0]
+                remaining = force_min_pos - int(tr_counts[cat])
+
+                idx = np.argwhere(te_labels[:, cat].flatten() == 1).flatten()
+                if idx.any():
+                    # move (necessary) tests samples to train
+                    if remaining < len(idx):
+                        idx = idx[:remaining]
+                    
+                    tr_docs = vstack([tr_docs, te_docs[idx, :]])
+                    tr_labels = np.vstack([tr_labels, te_labels[idx, :]])
+                    te_docs = sparse_delete(te_docs, idx)
+                    te_labels = np.delete(te_labels, idx, axis=0)
+                else:
+                    # duplicate train instances
+                    idx = np.argwhere(tr_labels[:, cat].flatten() == 1).flatten().tolist()
+                    idx = [random.choice([1,2,3]) for _ in range(remaining)]
+
+                    tr_docs = vstack([tr_docs, tr_docs[idx, :]])
+                    tr_labels = np.vstack([tr_labels, tr_labels[idx, :]])
+                
+                tr_counts = tr_labels.sum(axis=0)
+                cats = np.argwhere(tr_counts < force_min_pos)
+
         return MultilabelledCollection(tr_docs, tr_labels), MultilabelledCollection(te_docs, te_labels)
 
     def artificial_sampling_generator(self, sample_size, category, n_prevalences=101, repeats=1, min_df=-1, allow_replacement=False):
