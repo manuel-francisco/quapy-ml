@@ -1,4 +1,3 @@
-from calendar import c
 import signal
 import traceback
 
@@ -21,14 +20,15 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 from tqdm import tqdm
 from skmultilearn.dataset import load_dataset, available_data_sets
+from skmultilearn.ensemble import RakelD
 from scipy.sparse import csr_matrix
 import quapy as qp
-from MultiLabel.mlclassification import MLLabelClusterer, MLStackedClassifier, LabelSpacePartion, MLStackedRegressor, MLTwinSVM, MLknn, SKMLWrapper, MLEmbedding
+from MultiLabel.mlclassification import MLLabelClusterer, MLStackedClassifier, MLGeneralStackedClassifier, LabelSpacePartion, MLStackedRegressor, MLTwinSVM, MLknn, SKMLWrapper, MLEmbedding
 from MultiLabel.mldata import MultilabelledCollection
 from MultiLabel.mlquantification import MLCompositeCC, MLNaiveQuantifier, MLCC, MLPCC, MLRegressionQuantification, \
     MLACC, \
-    MLPACC, MLNaiveAggregativeQuantifier, MLMLPE, MLSlicedCC, StackMLRQuantifier, MLadjustedCount, MLprobAdjustedCount, \
-    CompositeMLRegressionQuantification, MLAggregativeQuantifier, MLQuantifier
+    MLPACC, MLNaiveAggregativeQuantifier, MLMLPE, MLSlicedCC, RakelDQuantifier, StackMLRQuantifier, MLadjustedCount, MLprobAdjustedCount, \
+    CompositeMLRegressionQuantification, MLAggregativeQuantifier, MLQuantifier, ClusterLabelPowersetQuantifier
 from MultiLabel.mlmodel_selection import MLGridSearchQ
 from quapy.method.aggregative import PACC, CC, EMQ, PCC, ACC, HDy
 import numpy as np
@@ -43,7 +43,7 @@ import random
 from skmultilearn.adapt import BRkNNaClassifier, BRkNNbClassifier, MLkNN, MLARAM, MLTSVM
 from quapy.model_selection import GridSearchQ
 
-from sklearn.linear_model import LogisticRegression, Ridge, Lasso, LassoCV, MultiTaskLassoCV, LassoLars, LassoLarsCV, \
+from sklearn.linear_model import LogisticRegression, RidgeCV, Lasso, LassoCV, MultiTaskLassoCV, LassoLars, LassoLarsCV, \
     ElasticNet, MultiTaskElasticNetCV, MultiTaskElasticNet, LinearRegression, ARDRegression, BayesianRidge, SGDRegressor
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC, LinearSVR
@@ -80,10 +80,10 @@ TC_DATASETS = ['reuters21578', 'jrcall', 'ohsumed', 'rcv1']
 TC_DATASETS_REDUCED = ['rcv1', 'ohsumed']
 
 
-SPLITS = [
+SPLITS = [ # WARNING: sin jrcall
     ['rcv1', 'mediamill', 'ohsumed', 'tmc2007_500', 'reuters21578'],
-    ['Corel5k', 'yeast', 'enron', 'delicious', 'jrcall'],
-    ['medical', 'scene', 'emotions', 'birds', 'bibtex', 'genbase'],
+    ['Corel5k', 'yeast', 'enron', 'delicious', 'genbase'], 
+    ['medical', 'scene', 'emotions', 'birds', 'bibtex'],
 ]
 
 
@@ -127,7 +127,7 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
     
 
     if subset == "general" or subset == "all":
-        common={'sample_size': sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
+        # common={'sample_size': sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
 
         # naives (Binary Classification + Binary Quantification)
         yield 'NaiveCC', MLNaiveAggregativeQuantifier(select_best(CC(cls()), single=True))
@@ -141,25 +141,53 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
         #         base_estimator__class_weight=["balanced", None],
         #     ), single=True))
 
-        yield 'StackCC', select_best(MLCC(MLStackedClassifier(cls())))
-        yield 'StackPCC', select_best(MLPCC(MLStackedClassifier(cls())))
-        yield 'StackACC', select_best(MLACC(MLStackedClassifier(cls())))
-        yield 'StackPACC', select_best(MLPACC(MLStackedClassifier(cls())))
+        # yield 'StackCC', select_best(MLCC(MLStackedClassifier(cls())))
+        # yield 'StackPCC', select_best(MLPCC(MLStackedClassifier(cls())))
+        # yield 'StackACC', select_best(MLACC(MLStackedClassifier(cls())))
+        # yield 'StackPACC', select_best(MLPACC(MLStackedClassifier(cls())))
+
+        CVStack_grid = {
+            'norm': [True, False],
+            'meta__estimator__C': np.array([1., 10, 100, 1000, .1]),
+            'meta__estimator__class_weight': ["balanced", None]
+        }
+
+        yield 'CVStackCC', select_best(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        # yield 'CVStackPCC', select_best(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        # yield 'CVStackACC', select_best(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        # yield 'CVStackPACC', select_best(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
 
         common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
-        yield 'MRQ-CC', MLRegressionQuantification(MLNaiveQuantifier(select_best(CC(cls()), single=True)), **common)
-        yield 'MRQ-PCC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()), single=True)), **common)
-        yield 'MRQ-ACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(ACC(cls()), single=True)), **common)
-        yield 'MRQ-PACC', MLRegressionQuantification(MLNaiveQuantifier(select_best(PACC(cls()), single=True)), **common)
-        yield 'MRQ-StackCC', MLRegressionQuantification(select_best(MLCC(MLStackedClassifier(cls()))), **common)
-        yield 'MRQ-StackPCC', MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), **common)
-        yield 'MRQ-StackACC', MLRegressionQuantification(select_best(MLACC(MLStackedClassifier(cls()))), **common)
-        yield 'MRQ-StackPACC', MLRegressionQuantification(select_best(MLPACC(MLStackedClassifier(cls()))), **common)
+        MRQ_grid = {
+            'regressor__estimator__C': np.array([1., 10, 100, 1000, .1]),
+        }
+
+        yield 'MRQ-CC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(CC(cls()), single=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-PCC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()), single=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-ACC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(ACC(cls()), single=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-PACC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PACC(cls()), single=True)), **common), param_grid=MRQ_grid)
+        # yield 'MRQ-StackCC', MLRegressionQuantification(select_best(MLCC(MLStackedClassifier(cls()))), **common)
+        # yield 'MRQ-StackPCC', MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), **common)
+        # yield 'MRQ-StackACC', MLRegressionQuantification(select_best(MLACC(MLStackedClassifier(cls()))), **common)
+        # yield 'MRQ-StackPACC', MLRegressionQuantification(select_best(MLPACC(MLStackedClassifier(cls()))), **common)
+
+        MRQ_grid = {
+            'norm': [True, False], #for MLGeneralStackedClassifier
+            'regressor__estimator__C': np.array([1., 10, 100, 1000, .1]),
+            'estimator__meta__estimator__C': np.array([1., 10, 100, 1000, .1]),
+            'estimator__meta__estimator__class_weight': ["balanced", None],
+        }
+
+        yield 'MRQ-CVStackCC', select_best(MLRegressionQuantification(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-CVStackPCC', select_best(MLRegressionQuantification(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-CVStackACC', select_best(MLRegressionQuantification(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-CVStackPACC', select_best(MLRegressionQuantification(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
     
     if subset == "mlc" or subset == "all":
         #MLC experiments
         yield "MLkNN-MLPCC", select_best(MLPCC(SKMLWrapper(MLkNN())), param_grid={
-            'k': range(1,10,2), 's': [0.5, 0.7, 1.0]
+            'k': range(1,10,2),
+            's': [0.5, 0.7, 1.0]
         })
         yield 'ChainPCC', select_best(MLPCC(ClassifierChain(cls())), param_grid={
             'base_estimator__C': np.logspace(-3, 3, 7),
@@ -186,22 +214,69 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
     
 
     if subset == "mlq" or subset == "all":
-        common={'protocol':'app', 'sample_size':sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False}
-        yield 'MRQ-MultitaskLasso', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MultiTaskLasso(normalize=True), **common), param_grid={
-            'alpha': np.linspace(0.001, 0.03, 5),
+        common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False}
+        yield 'RakelD-PCC', select_best(RakelDQuantifier(base=PCC(cls())), param_grid={
+            'n_clusters': [2, 5, 10, 50, 100],
+            'C': np.array([1., 10, 100, 1000, .1]),
+            'class_weight': ["balanced", None],
         })
+
+        yield 'KMeansClustersPowerSet-PCC', select_best(ClusterLabelPowersetQuantifier(base=PCC(cls())), param_grid={
+            'base__C': np.array([1., 10, 100, 1000, .1]),
+            'base__class_weight': ["balanced", None],
+            'clusterer__clusterer__n_clusters': [5, 15, 50, 100]
+        })
+        
+        # Params here get a little weird because of MultiOutputRegressors and/or AdaBoost
+        # yield 'MRQ-MultitaskLassoCV', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MultiTaskLassoCV(normalize=True), **common), param_grid={
+        #     # 'regressor__alpha': np.linspace(0.001, 20, .2),
+        #     'estimator__C': np.array([1., 10, 100, 1000, .1]),
+        #     'estimator__class_weight': ["balanced", None],
+        # })
+        # yield 'MRQ-RidgeCV', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RidgeCV(normalize=True), **common), param_grid={
+        #     # 'regressor__alpha': np.logspace(-6, 6, 13), # from https://scikit-learn.org/stable/modules/linear_model.html#ridge-complexity
+        #     'estimator__C': np.array([1., 10, 100, 1000, .1]),
+        #     'estimator__class_weight': ["balanced", None],
+        # })
+        # yield 'MRQ-LinearRegression', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=LinearRegression(n_jobs=-1), **common), param_grid={
+        #     'estimator__C': np.array([1., 10, 100, 1000, .1]),
+        #     'estimator__class_weight': ["balanced", None],
+        # })
         yield 'MRQ-Ridge', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=Ridge(normalize=True), **common), param_grid={
-            'alpha': [200, 235, 270, 300, 500],
+            # 'regressor__alpha': np.logspace(-6, 6, 13), # from https://scikit-learn.org/stable/modules/linear_model.html#ridge-complexity
+            'regressor__alphas': np.logspace(-3, 3, 7), # defaults https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeCV.html?highlight=ridge#sklearn.linear_model.RidgeCV
+            'estimator__C': np.array([1., 10, 100, 1000, .1]),
+            'estimator__class_weight': ["balanced", None],
         })
-        yield 'MRQ-LinearRegression', MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=LinearRegression(n_jobs=-1), **common)
+        yield 'MRQ-MultitaskLasso', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MultiTaskLasso(normalize=True), **common), param_grid={
+            'regressor__alphas': np.logspace(-3, 3, 7), #np.linspace(0.001, 20, .2),
+            'estimator__C': np.array([1., 10, 100, 1000, .1]),
+            'estimator__class_weight': ["balanced", None],
+        })
         yield 'MRQ-RandomForest', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RandomForestRegressor(n_jobs=6), **common), param_grid={
-            "n_estimators": [10, 100, 200],
+            "regressor__n_estimators": [10, 100, 200],
+            'estimator__C': np.array([1., 10, 100, 1000, .1]),
+            'estimator__class_weight': ["balanced", None],
         }, n_jobs=1)
-        yield 'MRQ-AdaBoostChain', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RegressorChain(AdaBoostRegressor()), **common), param_grid={
-            'n_estimators': [10, 50, 100, 200]
+        # yield 'MRQ-AdaBoostChain', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RegressorChain(AdaBoostRegressor()), **common), param_grid={
+        #     'regressor__base_estimator__n_estimators': [10, 50, 100, 200],
+        #     'estimator__C': np.array([1., 10, 100, 1000, .1]),
+        #     'estimator__class_weight': ["balanced", None],
+        # })
+        # yield 'MRQ-AdaBoostStack', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MLStackedRegressor(AdaBoostRegressor()), **common), param_grid={
+        #     'regressor__estimator__n_estimators': [10, 50, 100, 200],
+        #     'estimator__C': np.array([1., 10, 100, 1000, .1]),
+        #     'estimator__class_weight': ["balanced", None],
+        # })
+        
+        yield 'MRQ-LinearSVR', select_best(MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), regression=MultiOutputRegressor(LinearSVR())), param_grid={
+            "regressor__C": np.array([1., 10, 100, 1000, .1]),
         })
-        yield 'MRQ-AdaBoostStack', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MLStackedRegressor(AdaBoostRegressor()), **common), param_grid={
-            'reg__n_estimators': [10, 50, 100, 200]
+        yield 'MRQ-StackedLinearSVR', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()))), regression=MLStackedRegressor(LinearSVR())), param_grid={
+            "regressor__C": np.array([1., 10, 100, 1000, .1]),
+        })
+        yield 'MRQ-ChainedLinearSVR', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()))), regression=RegressorChain(LinearSVR())), param_grid={
+            "regressor__base_estimator__C": np.array([1., 10, 100, 1000, .1]),
         })
 
     return None
@@ -340,7 +415,7 @@ def print_info(train, test):
 
 
 
-def save_results(npp_results, app_results, result_path, train_prevs):
+def save_results(npp_results, app_results, result_path, train_prevs, best_params):
     # results are lists of tuples of (true_prevs, estim_prevs)
     # each true_prevs is an ndarray of ndim=2, but the second dimension is constrained
     def _prepare_result_lot(lot_results):
@@ -349,6 +424,7 @@ def save_results(npp_results, app_results, result_path, train_prevs):
             'true_prevs': np.asarray([true_i[:,1].flatten() for true_i in true_prevs]),  # removes the constrained prevalence
             'estim_prevs': np.asarray([estim_i[:,1].flatten() for estim_i in estim_prevs]),  # removes the constrained prevalence
             'train_prevs' : train_prevs,
+            'best_params': best_params,
         }
     results = {
         'npp': _prepare_result_lot(npp_results),
@@ -364,7 +440,13 @@ def load_results(result_path):
         estim_prevs = lot_result['estim_prevs']
         estim_prevs = [np.vstack([1-estim_i, estim_i]).T for estim_i in estim_prevs]  # add the constrained prevalence
         train_prevs = lot_result["train_prevs"]
-        return true_prevs, estim_prevs, train_prevs
+
+        best_params = None
+        if "best_params" in lot_result.keys():
+            best_params = lot_result["best_params"]
+
+        return true_prevs, estim_prevs, train_prevs, best_params
+    
     results = pickle.load(open(result_path, 'rb'))
     results = {
         'npp': _unpack_result_lot(results['npp']),
@@ -385,14 +467,17 @@ def run_experiment(dataset_name, train, test, model_name, model, n_prevalences=1
 
     results_npp = ml_natural_prevalence_prediction(model, test, sample_size, repeats=n_prevalences*repeats)
     results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=n_prevalences, repeats=repeats)
-    save_results(results_npp, results_app, result_path, train.prevalence())
+
+    best_params = model.get_params()
+
+    save_results(results_npp, results_app, result_path, train.prevalence(), best_params)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Experiments for multi-label quantification')
     parser.add_argument('--results', type=str, default='./results_generales', metavar='str',
                         help=f'path where to store the results')
-    parser.add_argument('--subset', type=str, default="mlc", metavar="str",
+    parser.add_argument('--subset', type=str, default="all", metavar="str",
                         help="subset of models to run, default: general, options: [general, mlc, mlq, all]")
     opt = parser.parse_args()
 
@@ -404,11 +489,17 @@ if __name__ == '__main__':
     
     with open("whoami.txt", 'r') as f:
         who = f.readline().strip()
-        dataset_split = ["alex", "manolo", "amarna"].index(who)
+        if who == "all":
+            dataset_list = itertools.chain(*SPLITS)
+        else:
+            dataset_split = ["alex", "manolo", "amarna"].index(who)
+            dataset_list = SPLITS[dataset_split]
+    
+    dataset_list = ["emotions"]
 
     # import pandas as pd
     # records = []
-    for dataset_name in SPLITS[dataset_split]:
+    for dataset_name in dataset_list:
         train, test = get_dataset(dataset_name)
 
         # DEFAULTS

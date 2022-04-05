@@ -3,6 +3,7 @@ from copy import deepcopy
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cluster import KMeans
 from sklearn.linear_model import LogisticRegression, Ridge
+from sklearn.model_selection import cross_val_predict
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.preprocessing import StandardScaler
@@ -148,6 +149,81 @@ class MLLabelClusterer:
         self.classifier.set_params(**{k.removeprefix("classifier__"):v for k, v in params.items() if k.startswith("classifier__")})
 
 
+class MLGeneralStackedClassifier:
+    def __init__(self, base_estimator=LogisticRegression(), cv=0, norm=True, passthrough=True, n_jobs=-1):
+        if not hasattr(base_estimator, 'predict_proba'):
+            print('the estimator does not seem to be probabilistic: calibrating')
+            base_estimator = CalibratedClassifierCV(base_estimator)
+        
+        self.base = deepcopy(OneVsRestClassifier(base_estimator))
+        self.meta = deepcopy(OneVsRestClassifier(base_estimator))
+        self.scaler = StandardScaler()
+        self.cv = cv
+        self.norm = norm
+        self.n_jobs = n_jobs
+        self.passthrough = passthrough
+    
+    def fit(self, X, y, **params):
+        assert y.ndim==2, 'the dataset does not seem to be multi-label'
+        
+        if self.cv > 0:
+            preds = cross_val_predict(self.base, X, y, cv=self.cv, n_jobs=self.n_jobs, method="predict_proba")
+        else:
+            # shouldn't we split train/val here?
+            self.base.fit(X, y)
+            preds = self.base.predict_proba(X)
+        
+        if self.passthrough:
+            if issparse(X):
+                # X = X.todense()
+                preds = np.hstack([X.todense(), preds])
+            else:
+                preds = np.hstack([X, preds])
+        
+        if self.norm:
+            preds = self.scaler.fit_transform(preds)
+        
+        self.base.fit(X, y)
+        self.meta.fit(preds, y)
+        return self
+    
+    def _get_meta_inputs(self, X):
+        preds = self.base.predict_proba(X)
+        if self.passthrough:
+            if issparse(X):
+                # X = X.todense()
+                preds = np.hstack([X.todense(), preds])
+            else:
+                preds = np.hstack([X, preds])
+        
+        if self.norm:
+            preds = self.scaler.transform(preds)
+        
+        return preds
+    
+    def predict_proba(self, X):
+        return self.meta.predict_proba(self._get_meta_inputs(X))
+    
+    def predict(self, X):
+        return self.meta.predict(self._get_meta_inputs(X))
+        
+    def set_params(self, **parameters):
+        if "norm" in parameters.keys():
+            self.norm = parameters["norm"]
+            parameters.pop("norm")
+        
+        # params = {f"estimator__{k}":v for k, v in parameters.items()}
+        # self.base.set_params(**params)
+        params = {k.removeprefix("meta__"):v for k,v in parameters.items() if k.startswith("meta__")}
+        self.meta.set_params(**params)
+
+    def get_params(self, deep=True):
+        params = {f"meta__{k}":v for k, v in self.meta.get_params().items()}
+        params["norm"] = self.norm
+        return params
+
+
+
 class MLStackedClassifier:  # aka Funnelling Monolingual
     def __init__(self, base_estimator=LogisticRegression()):
         if not hasattr(base_estimator, 'predict_proba'):
@@ -206,10 +282,10 @@ class MLStackedRegressor:
         # params = parameters
         # params = {f"estimator__{k}":v for k, v in parameters.items()}
         #self.base.set_params(**params)
-        self.meta.set_params(**{f'estimator__{k.removeprefix("reg__")}':v for k,v, in parameters.items()})
+        self.meta.set_params(**parameters)
 
     def get_params(self, deep=True):
-        return {f'reg__{k.removeprefix("estimator__")}':v for k,v in self.meta.get_params().items()}
+        return self.meta.get_params()
 
 
 class LabelSpacePartion:

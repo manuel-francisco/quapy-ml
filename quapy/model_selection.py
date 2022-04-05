@@ -228,7 +228,10 @@ class GridSearchQ(BaseQuantifier):
         self.param_grid = parameters
 
     def get_params(self, deep=True):
-        return self.param_grid
+        if hasattr(self, 'best_model_'):
+            return self.best_model_.get_params()
+        raise ValueError('get_params called before fit')
+        # return self.param_grid
 
     def best_model(self):
         if hasattr(self, 'best_model_'):

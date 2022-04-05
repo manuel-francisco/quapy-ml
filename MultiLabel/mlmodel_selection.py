@@ -164,6 +164,10 @@ class MLGridSearchQ(MLQuantifier):
             except TimeoutError:
                 print(f'timeout reached for config {params}')
                 some_timeouts = True
+            except Exception as e:
+                print(f"it seems like there's been a problem with this set of params {params}. Skiping")
+                print(e)
+                continue
 
         if self.best_score_ is None and some_timeouts:
             raise TimeoutError('all jobs took more than the timeout time to end')
@@ -198,7 +202,9 @@ class MLGridSearchQ(MLQuantifier):
         self.param_grid = parameters
 
     def get_params(self, deep=True):
-        return self.param_grid
+        if hasattr(self, 'best_model_'):
+            return self.best_model_.get_params()
+        raise ValueError('get_params called before fit')
 
     def best_model(self):
         if hasattr(self, 'best_model_'):

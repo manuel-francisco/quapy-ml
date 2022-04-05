@@ -1,5 +1,7 @@
+import math
 import numpy as np
 from copy import deepcopy
+from sklearn.cluster import KMeans
 
 import sklearn.preprocessing
 from scipy.sparse import issparse
@@ -11,6 +13,10 @@ from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.linear_model import LogisticRegression, Ridge, Lasso, LassoCV, MultiTaskLassoCV, LassoLars, LassoLarsCV, \
     ElasticNet, MultiTaskElasticNetCV, MultiTaskElasticNet, LinearRegression, ARDRegression, BayesianRidge, SGDRegressor
 
+from skmultilearn.ensemble import LabelSpacePartitioningClassifier
+from skmultilearn.cluster import RandomLabelSpaceClusterer, MatrixLabelSpaceClusterer
+from skmultilearn.problem_transform import LabelPowerset
+
 from sklearn.feature_selection import chi2, SelectKBest
 from sklearn.tree import DecisionTreeRegressor
 
@@ -19,6 +25,7 @@ from MultiLabel.mlclassification import MLStackedClassifier, MLStackedRegressor
 from MultiLabel.mldata import MultilabelledCollection
 from quapy.method.aggregative import CC, ACC, PACC, AggregativeQuantifier
 from quapy.method.base import BaseQuantifier
+from quapy.data import LabelledCollection
 
 from abc import abstractmethod
 
@@ -360,21 +367,23 @@ class MLRegressionQuantification:
 
     def set_params(self, **parameters):
         #FIXME: self.reg modifica los nombres de los parameters, comprobar
-        est_params = self.estimator.get_params()
-        reg_params = self.reg.get_params()
-        new_est_params = {}
-        new_reg_params = {}
-        for k,v in parameters.items():
-            if k in est_params.keys():
-                new_est_params[k] = v
+        paramse = {}
+        paramsr = {}
+        for k, v in parameters.items():
+            if k.startswith("estimator__"):
+                paramse[k.removeprefix("estimator__")] = v
+            elif k.startswith("regressor__"):
+                paramsr[k.removeprefix("regressor__")] = v
 
-            if k in reg_params.keys():
-                new_reg_params[k] = v
-        self.estimator.set_params(**new_est_params)
-        self.reg.set_params(**new_reg_params)
+        if paramse:
+            self.estimator.set_params(**paramse)
+        if paramsr:
+            self.reg.set_params(**paramsr)
     
     def get_params(self):
-        return self.estimator.get_params() + self.reg.get_params()
+        paramse = {f"estimator__{k}":v for k, v in self.estimator.get_params().items()}
+        paramsr = {f"regressor__{k}":v for k, v in self.reg.get_params().items()}
+        return paramse | paramsr
 
     def _prepare_arrays(self, Xs, ys, samples_mean, samples_std):
         Xs = np.asarray(Xs)
@@ -766,3 +775,89 @@ class MLprobAdjustedCount(MLAggregativeQuantifier):
         correction = P.dot(self.Pte_cond_estim_)
         adjusted = correction.mean(axis=0)
         return np.asarray([1-adjusted, adjusted]).T
+
+
+class ClusterLabelPowersetQuantifier:
+    def __init__(self, base=CC(LogisticRegression()), clusterer=MatrixLabelSpaceClusterer(clusterer=KMeans(n_clusters=5)), n_jobs=1):
+        self.base = base
+        self.clusterer = clusterer
+        self.n_jobs = n_jobs
+    
+    def fit(self, data, **params):
+        X, y = data.Xy
+        self.n_cat = y.shape[1]
+
+        self.rc = self.clusterer.fit_predict(y, y)
+        self.partitions = self.clusterer.fit_predict(X, y)
+
+        def cat_job(p):
+            lp = LabelPowerset()
+            yt = lp.transform(y[:, p])
+            q = deepcopy(self.base).fit(LabelledCollection(X, yt))
+            return lp, q
+        
+        results = qp.util.parallel(cat_job, self.partitions, n_jobs=self.n_jobs)
+        self.lps, self.qs = zip(*results)
+    
+    def quantify(self, X):
+        yhat = np.zeros(self.n_cat)
+
+        def cat_job(args):
+            i, p = args
+            yphat_perclass = self.qs[i].quantify(X)
+            combinations = self.lps[i].inverse_transform(np.asarray(list(self.lps[i].unique_combinations_.values()))).todense()
+            yphat = np.sum(np.multiply(combinations, yphat_perclass[:, np.newaxis]), axis=0)
+            return p, yphat
+        
+        results = qp.util.parallel(cat_job, enumerate(self.partitions), n_jobs=self.n_jobs)
+        for p, yphat in results:
+            yhat[p] = yphat
+        
+        neg_prevs = 1 - yhat
+        return np.asarray([neg_prevs, yhat]).T
+    
+    def get_params(self):
+        paramsb = {f'base__{k}':v for k,v in self.base.get_params().items()}
+        paramsc = {f'clusterer__{k}':v for k,v in self.clusterer.get_params().items()}
+        return paramsb | paramsc
+    
+    def set_params(self, **params):
+        paramsb = {k.removeprefix('base__'):v for k,v in params.items() if k.startswith('base__')}
+        paramsc = {k.removeprefix('clusterer__'):v for k,v in params.items() if k.startswith('clusterer__')}
+        self.base.set_params(**paramsb)
+        self.clusterer.set_params(**paramsc)
+
+
+# This class can be removed, ClusterLabelPowersetQuantifier does exactly the same
+# if clusterer is set to skmultilearn.cluster.RandomLabelSpaceClusterer
+class RakelDQuantifier(ClusterLabelPowersetQuantifier):
+    def __init__(self, base=CC(LogisticRegression()), n_clusters=5, n_jobs=-1):
+        self.base = base
+        self.n_clusters = n_clusters
+        self.n_jobs = n_jobs
+        
+    def fit(self, data, **params):
+        X, y = data.Xy
+        self.n_cat = y.shape[1]
+
+        if self.n_cat < self.n_clusters:
+            raise ValueError("the size of the cluster is not greater than 1")
+        
+        cluster_size = math.ceil(self.n_cat / self.n_clusters)
+        self.rc = RandomLabelSpaceClusterer(cluster_size, self.n_clusters, allow_overlap=False)
+
+        super().fit(data, **params)
+        
+        return self
+    
+    def get_params(self):
+        params = self.base.get_params()
+        params["n_clusters"] = self.n_clusters
+        return params
+    
+    def set_params(self, **params):
+        base_params = params
+        if "n_clusters" in params.keys():
+            base_params = {k:v for k, v in params.items() if k != "n_clusters"}
+            self.n_clusters = params["n_clusters"]
+        self.base.set_params(**base_params)
