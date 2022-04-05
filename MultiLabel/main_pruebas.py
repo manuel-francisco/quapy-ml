@@ -494,8 +494,6 @@ if __name__ == '__main__':
         else:
             dataset_split = ["alex", "manolo", "amarna"].index(who)
             dataset_list = SPLITS[dataset_split]
-    
-    dataset_list = ["emotions"]
 
     # import pandas as pd
     # records = []
