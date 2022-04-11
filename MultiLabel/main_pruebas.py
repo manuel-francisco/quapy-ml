@@ -152,7 +152,7 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
             'meta__estimator__class_weight': ["balanced", None]
         }
 
-        yield 'CVStackCC', select_best(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        # yield 'CVStackCC', select_best(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
         # yield 'CVStackPCC', select_best(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
         # yield 'CVStackACC', select_best(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
         # yield 'CVStackPACC', select_best(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
@@ -178,10 +178,10 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
             'estimator__meta__estimator__class_weight': ["balanced", None],
         }
 
-        yield 'MRQ-CVStackCC', select_best(MLRegressionQuantification(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
-        yield 'MRQ-CVStackPCC', select_best(MLRegressionQuantification(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
-        yield 'MRQ-CVStackACC', select_best(MLRegressionQuantification(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
-        yield 'MRQ-CVStackPACC', select_best(MLRegressionQuantification(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        # yield 'MRQ-CVStackCC', select_best(MLRegressionQuantification(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        # yield 'MRQ-CVStackPCC', select_best(MLRegressionQuantification(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        # yield 'MRQ-CVStackACC', select_best(MLRegressionQuantification(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        # yield 'MRQ-CVStackPACC', select_best(MLRegressionQuantification(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
     
     if subset == "mlc" or subset == "all":
         #MLC experiments
@@ -464,11 +464,10 @@ def run_experiment(dataset_name, train, test, model_name, model, n_prevalences=1
     #train, test = get_dataset(dataset_name)
 
     model.fit(train)
+    best_params = model.get_params()
 
     results_npp = ml_natural_prevalence_prediction(model, test, sample_size, repeats=n_prevalences*repeats)
     results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=n_prevalences, repeats=repeats)
-
-    best_params = model.get_params()
 
     save_results(results_npp, results_app, result_path, train.prevalence(), best_params)
 

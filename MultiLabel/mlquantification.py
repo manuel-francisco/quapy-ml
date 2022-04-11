@@ -301,6 +301,8 @@ class MLNaiveQuantifier(MLQuantifier):
         self.q.set_params(**parameters)
 
     def get_params(self, deep=True):
+        if self.estimators: # not nice, but required to save params in __main__
+            return {f'estimator{i}':q.get_params() for i, q in enumerate(self.estimators)}
         return self.q.get_params()
 
 
