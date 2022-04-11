@@ -80,8 +80,8 @@ TC_DATASETS = ['reuters21578', 'jrcall', 'ohsumed', 'rcv1']
 TC_DATASETS_REDUCED = ['rcv1', 'ohsumed']
 
 
-SPLITS = [ # WARNING: sin jrcall
-    ['rcv1', 'mediamill', 'ohsumed', 'tmc2007_500', 'reuters21578'],
+SPLITS = [ # WARNING: sin jrcall ni rcv1
+    ['mediamill', 'ohsumed', 'tmc2007_500', 'reuters21578'],
     ['Corel5k', 'yeast', 'enron', 'delicious', 'genbase'], 
     ['medical', 'scene', 'emotions', 'birds', 'bibtex'],
 ]
@@ -490,6 +490,8 @@ if __name__ == '__main__':
         who = f.readline().strip()
         if who == "all":
             dataset_list = itertools.chain(*SPLITS)
+        elif who == "lla":
+            dataset_list = reversed(list(itertools.chain(*SPLITS)))
         else:
             dataset_split = ["alex", "manolo", "amarna"].index(who)
             dataset_list = SPLITS[dataset_split]
