@@ -43,7 +43,7 @@ import random
 from skmultilearn.adapt import BRkNNaClassifier, BRkNNbClassifier, MLkNN, MLARAM, MLTSVM
 from quapy.model_selection import GridSearchQ
 
-from sklearn.linear_model import LogisticRegression, RidgeCV, Lasso, LassoCV, MultiTaskLassoCV, LassoLars, LassoLarsCV, \
+from sklearn.linear_model import LogisticRegression, Ridge, RidgeCV, Lasso, LassoCV, MultiTaskLassoCV, LassoLars, LassoLarsCV, \
     ElasticNet, MultiTaskElasticNetCV, MultiTaskElasticNet, LinearRegression, ARDRegression, BayesianRidge, SGDRegressor
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC, LinearSVR
