@@ -499,7 +499,7 @@ if __name__ == '__main__':
 
     # import pandas as pd
     # records = []
-    for dataset_name in SKMULTILEARN_SMALL_DATASETS:# dataset_list:
+    for dataset_name in dataset_list:
         train, test = get_dataset(dataset_name)
 
         # DEFAULTS
