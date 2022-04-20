@@ -150,7 +150,7 @@ class MLLabelClusterer:
 
 
 class MLGeneralStackedClassifier:
-    def __init__(self, base_estimator=LogisticRegression(), cv=0, norm=True, passthrough=True, n_jobs=-1):
+    def __init__(self, base_estimator=LogisticRegression(), cv=0, norm=True, passthrough=True, n_jobs=-1, save_preds=True):
         if not hasattr(base_estimator, 'predict_proba'):
             print('the estimator does not seem to be probabilistic: calibrating')
             base_estimator = CalibratedClassifierCV(base_estimator)
@@ -160,31 +160,43 @@ class MLGeneralStackedClassifier:
         self.scaler = StandardScaler()
         self.cv = cv
         self.norm = norm
-        self.n_jobs = n_jobs
         self.passthrough = passthrough
+        self.n_jobs = n_jobs
+        # FIXME: it doesn't make sense at production, only for the sake
+        # of saving time in our experiments
+        self.save_preds = save_preds
+        self.preds = None
+        self.X_shape = None
     
     def fit(self, X, y, **params):
         assert y.ndim==2, 'the dataset does not seem to be multi-label'
         
-        if self.cv > 0:
-            preds = cross_val_predict(self.base, X, y, cv=self.cv, n_jobs=self.n_jobs, method="predict_proba")
-        else:
-            # shouldn't we split train/val here?
-            self.base.fit(X, y)
-            preds = self.base.predict_proba(X)
-        
-        if self.passthrough:
-            if issparse(X):
-                # X = X.todense()
-                preds = np.hstack([X.todense(), preds])
+        if not self.save_preds or self.preds is None or self.X_shape != X.shape:
+            if self.cv > 0:
+                preds = cross_val_predict(self.base, X, y, cv=self.cv, n_jobs=self.n_jobs, method="predict_proba")
             else:
-                preds = np.hstack([X, preds])
+                # shouldn't we split train/val here?
+                self.base.fit(X, y)
+                preds = self.base.predict_proba(X)
+            
+            if self.passthrough:
+                if issparse(X):
+                    # X = X.todense()
+                    preds = np.hstack([X.todense(), preds])
+                else:
+                    preds = np.hstack([X, preds])
+            
+            # uncomment and restore fit when removing save_preds
+            # if self.norm:
+            #     preds = self.scaler.fit_transform(preds)
+            
+            self.base.fit(X, y)
+            self.preds = preds
+            self.X_shape = X.shape
+        else:
+            preds = self.preds
         
-        if self.norm:
-            preds = self.scaler.fit_transform(preds)
-        
-        self.base.fit(X, y)
-        self.meta.fit(preds, y)
+        self.meta.fit(self.scaler.fit_transform(preds) if self.norm else preds, y) #fit(preds, y)
         return self
     
     def _get_meta_inputs(self, X):

@@ -148,7 +148,7 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
 
         CVStack_grid = {
             'meta__estimator__C': np.array([1., 10, 100, 1000, .1]),
-            'meta__estimator__class_weight': ["balanced", None]
+            'meta__estimator__class_weight': ["balanced", None],
             'norm': [True, False],
         }
 
@@ -458,7 +458,7 @@ def load_results(result_path):
 def run_experiment(dataset_name, train, test, model_name, model, n_prevalences=101, repeats=25):
     result_path = f'{opt.results}/{dataset_name}_{model_name}.pkl'
     if already_run(result_path):
-        return
+        return True
 
     print(f'runing experiment {dataset_name} x {model_name}')
     #train, test = get_dataset(dataset_name)
@@ -470,6 +470,7 @@ def run_experiment(dataset_name, train, test, model_name, model, n_prevalences=1
     results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=n_prevalences, repeats=repeats)
 
     save_results(results_npp, results_app, result_path, train.prevalence(), best_params)
+    return False
 
 
 if __name__ == '__main__':
@@ -498,7 +499,7 @@ if __name__ == '__main__':
 
     # import pandas as pd
     # records = []
-    for dataset_name in dataset_list:
+    for dataset_name in SKMULTILEARN_SMALL_DATASETS:# dataset_list:
         train, test = get_dataset(dataset_name)
 
         # DEFAULTS
@@ -544,11 +545,35 @@ if __name__ == '__main__':
             if dataset_name == "delicious" and modelname == "CLEMS-PCC": #FIXME
                 continue #FIXME
             
-            try:
-                run_experiment(dataset_name, train, test, modelname, model, n_prevalences, repeats)
-            except Exception as e:
-                print(f"Well there was some problem with {dataset_name} x {modelname}")
-                print(e)
+            # try:
+            skipped = run_experiment(dataset_name, train, test, modelname, model, n_prevalences, repeats)
+
+            # use the trained model to run its MRQ version
+            if not skipped and not modelname.startswith("MRQ") and "CVStack" in modelname:
+                common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
+                
+                modelname = f'MRQ-{modelname}'
+                mrq_model = MLRegressionQuantification(model, **common)
+                mrq_model.trained_ = True
+                mrq_model.estimator_params_changed_ = False
+                mrq_model.reg_params_changed_ = True
+                gridq = MLGridSearchQ(
+                    model=mrq_model,
+                    param_grid={
+                        'regressor__estimator__C': np.array([1., 10, 100, 1000, .1]),
+                    },
+                    sample_size=100,
+                    n_jobs=-1,
+                    verbose=True,
+                    n_prevalences=n_prevalences,
+                    repeats=repeats,
+                )
+
+                run_experiment(dataset_name, train, test, modelname, gridq, n_prevalences, repeats)
+
+            # except Exception as e:
+            #     print(f"Well there was some problem with {dataset_name} x {modelname}")
+            #     print(e)
 
     
 

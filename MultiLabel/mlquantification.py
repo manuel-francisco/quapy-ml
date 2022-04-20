@@ -331,7 +331,7 @@ class MLNaiveAggregativeQuantifier(MLNaiveQuantifier, MLAggregativeQuantifier):
 
 class MLRegressionQuantification:
     def __init__(self,
-                 mlquantifier=MLNaiveQuantifier(CC(LinearSVC())),
+                 estimator=MLNaiveQuantifier(CC(LinearSVC())),
                  regression='ridge',
                  protocol='npp',
                  n_samples=500,
@@ -341,7 +341,7 @@ class MLRegressionQuantification:
                  stds=True):
 
         assert protocol in ['npp', 'app'], 'unknown protocol'
-        self.estimator = mlquantifier
+        self.estimator = estimator
         if isinstance(regression, str):
             assert regression in ['ridge', 'svr'], 'unknown regression model'
             if regression == 'ridge':
