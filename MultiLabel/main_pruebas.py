@@ -147,15 +147,15 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
         # yield 'StackPACC', select_best(MLPACC(MLStackedClassifier(cls())))
 
         CVStack_grid = {
-            'norm': [True, False],
             'meta__estimator__C': np.array([1., 10, 100, 1000, .1]),
             'meta__estimator__class_weight': ["balanced", None]
+            'norm': [True, False],
         }
 
-        # yield 'CVStackCC', select_best(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
-        # yield 'CVStackPCC', select_best(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
-        # yield 'CVStackACC', select_best(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
-        # yield 'CVStackPACC', select_best(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        yield 'CVStackCC', select_best(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        yield 'CVStackPCC', select_best(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        yield 'CVStackACC', select_best(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        yield 'CVStackPACC', select_best(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
 
         common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
         MRQ_grid = {
@@ -172,16 +172,16 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
         # yield 'MRQ-StackPACC', MLRegressionQuantification(select_best(MLPACC(MLStackedClassifier(cls()))), **common)
 
         MRQ_grid = {
-            'norm': [True, False], #for MLGeneralStackedClassifier
-            'regressor__estimator__C': np.array([1., 10, 100, 1000, .1]),
+            'estimator__norm': [True, False], #for MLGeneralStackedClassifier
             'estimator__meta__estimator__C': np.array([1., 10, 100, 1000, .1]),
             'estimator__meta__estimator__class_weight': ["balanced", None],
+            'regressor__estimator__C': np.array([1., 10, 100, 1000, .1]),
         }
 
-        # yield 'MRQ-CVStackCC', select_best(MLRegressionQuantification(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
-        # yield 'MRQ-CVStackPCC', select_best(MLRegressionQuantification(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
-        # yield 'MRQ-CVStackACC', select_best(MLRegressionQuantification(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
-        # yield 'MRQ-CVStackPACC', select_best(MLRegressionQuantification(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-CVStackCC', select_best(MLRegressionQuantification(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-CVStackPCC', select_best(MLRegressionQuantification(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-CVStackACC', select_best(MLRegressionQuantification(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-CVStackPACC', select_best(MLRegressionQuantification(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
     
     if subset == "mlc" or subset == "all":
         #MLC experiments
@@ -201,7 +201,7 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
         yield 'LClusterer-PCC', select_best(MLPCC(MLLabelClusterer()), param_grid={
             # 'classifier__k': range(1,10,2),
             # 'classifier__s': [0.5, 0.7, 1.0],
-            'clusterer__n_clusters': [2, 3, 5, 10, 50, 100],
+            'clusterer__n_clusters': [2, 3, 5, 10, 50],#, 100], #segfault for 100
         }, n_jobs=6)
         yield 'DT-PCC', select_best(MLPCC(DecisionTreeClassifier()), param_grid={
             'criterion': ["gini", "entropy"],
@@ -244,12 +244,12 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
         # })
         yield 'MRQ-Ridge', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=Ridge(normalize=True), **common), param_grid={
             # 'regressor__alpha': np.logspace(-6, 6, 13), # from https://scikit-learn.org/stable/modules/linear_model.html#ridge-complexity
-            'regressor__alphas': np.logspace(-3, 3, 7), # defaults https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeCV.html?highlight=ridge#sklearn.linear_model.RidgeCV
+            'regressor__alpha': np.logspace(-3, 3, 7), # defaults https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeCV.html?highlight=ridge#sklearn.linear_model.RidgeCV
             'estimator__C': np.array([1., 10, 100, 1000, .1]),
             'estimator__class_weight': ["balanced", None],
         })
         yield 'MRQ-MultitaskLasso', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=MultiTaskLasso(normalize=True), **common), param_grid={
-            'regressor__alphas': np.logspace(-3, 3, 7), #np.linspace(0.001, 20, .2),
+            'regressor__alpha': np.logspace(-3, 3, 7), #np.linspace(0.001, 20, .2),
             'estimator__C': np.array([1., 10, 100, 1000, .1]),
             'estimator__class_weight': ["balanced", None],
         })
@@ -257,7 +257,7 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
             "regressor__n_estimators": [10, 100, 200],
             'estimator__C': np.array([1., 10, 100, 1000, .1]),
             'estimator__class_weight': ["balanced", None],
-        }, n_jobs=1)
+        }, n_jobs=-1)
         # yield 'MRQ-AdaBoostChain', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RegressorChain(AdaBoostRegressor()), **common), param_grid={
         #     'regressor__base_estimator__n_estimators': [10, 50, 100, 200],
         #     'estimator__C': np.array([1., 10, 100, 1000, .1]),
@@ -270,7 +270,7 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
         # })
         
         yield 'MRQ-LinearSVR', select_best(MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), regression=MultiOutputRegressor(LinearSVR())), param_grid={
-            "regressor__C": np.array([1., 10, 100, 1000, .1]),
+            "regressor__estimator__C": np.array([1., 10, 100, 1000, .1]),
         })
         yield 'MRQ-StackedLinearSVR', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()))), regression=MLStackedRegressor(LinearSVR())), param_grid={
             "regressor__C": np.array([1., 10, 100, 1000, .1]),
@@ -477,7 +477,7 @@ if __name__ == '__main__':
     parser.add_argument('--results', type=str, default='./results_generales', metavar='str',
                         help=f'path where to store the results')
     parser.add_argument('--subset', type=str, default="all", metavar="str",
-                        help="subset of models to run, default: general, options: [general, mlc, mlq, all]")
+                        help="subset of models to run, default: all, options: [general, mlc, mlq, all]")
     opt = parser.parse_args()
 
     os.makedirs(opt.results, exist_ok=True)
@@ -541,6 +541,9 @@ if __name__ == '__main__':
             print(f"There was not any particular number of repeats for dataset {dataset_name}, using defaults ({repeats}).")
 
         for modelname, model in models(opt.subset, n_prevalences=n_prevalences_grid, repeats=repeats_grid):
+            if dataset_name == "delicious" and modelname == "CLEMS-PCC": #FIXME
+                continue #FIXME
+            
             try:
                 run_experiment(dataset_name, train, test, modelname, model, n_prevalences, repeats)
             except Exception as e:

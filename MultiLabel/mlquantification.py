@@ -367,6 +367,10 @@ class MLRegressionQuantification:
         self.stds = stds
         # self.covs = covs
 
+        self.trained_ = False
+        self.reg_params_changed_ = False
+        self.estimator_params_changed_ = False
+
     def set_params(self, **parameters):
         #FIXME: self.reg modifica los nombres de los parameters, comprobar
         paramse = {}
@@ -378,8 +382,10 @@ class MLRegressionQuantification:
                 paramsr[k.removeprefix("regressor__")] = v
 
         if paramse:
+            self.estimator_params_changed_ = True
             self.estimator.set_params(**paramse)
         if paramsr:
+            self.reg_params_changed_ = True
             self.reg.set_params(**paramsr)
     
     def get_params(self):
@@ -433,14 +439,22 @@ class MLRegressionQuantification:
         self.classes_ = data.classes_
         tr, val = data.train_test_split(force_min_pos=2)
         assert all(tr.counts()>0), f'this is not gonna work, {tr.counts()}'
-        self.estimator.fit(tr)
-        if self.protocol == 'npp':
-            Xs, ys = self.generate_samples_npp(val)
-        elif self.protocol == 'app':
-            Xs, ys = self.generate_samples_app(val)
-        # Xs = self.norm.fit_transform(Xs)
 
-        self.reg.fit(Xs, ys)
+        if not self.trained_ or self.estimator_params_changed_:
+            self.estimator.fit(tr)
+        
+        if not self.trained_ or self.estimator_params_changed_ or self.reg_params_changed_:
+            if self.protocol == 'npp':
+                Xs, ys = self.generate_samples_npp(val)
+            elif self.protocol == 'app':
+                Xs, ys = self.generate_samples_app(val)
+            # Xs = self.norm.fit_transform(Xs)
+
+            self.reg.fit(Xs, ys)
+
+        self.trained_ = True
+        self.reg_params_changed_ = False
+        self.estimator_params_changed_ = False
         return self
 
     def quantify(self, instances):
