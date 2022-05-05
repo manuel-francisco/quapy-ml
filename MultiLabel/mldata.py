@@ -80,6 +80,7 @@ class MultilabelledCollection:
                 train_test_split(self.instances, self.labels, train_size=train_prop, random_state=random_state)
         
 
+        # FIXME: this iterative process may halt
         # enforce that there are at least {force_min_pos} per category in train
         # this is a very particular case to deal with unstratified splits
         if force_min_pos > 0:
@@ -111,7 +112,7 @@ class MultilabelledCollection:
                 else:
                     # duplicate train instances
                     idx = np.argwhere(tr_labels[:, cat].flatten() == 1).flatten().tolist()
-                    idx = [random.choice([1,2,3]) for _ in range(remaining)]
+                    idx = [random.choice(idx) for _ in range(remaining)]
 
                     tr_docs = vstack([tr_docs, tr_docs[idx, :]])
                     tr_labels = np.vstack([tr_labels, tr_labels[idx, :]])
