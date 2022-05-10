@@ -5,6 +5,7 @@ signal.signal(signal.SIGUSR1, lambda sig, stack: traceback.print_stack(stack))
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+os.environ['JOBLIB_TEMP_FOLDER'] = '/tmp'
 
 
 
@@ -193,11 +194,11 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
             'base_estimator__C': np.logspace(-3, 3, 7),
             'base_estimator__class_weight': [None, "balanced"],
         })
-        yield 'CLEMS-PCC', select_best(MLPCC(MLEmbedding()), param_grid={
-            'regressor__n_estimators': [10, 20, 50],
-            'classifier__k': range(1, 10, 2),
-            'classifier__s': [.5, .7, 1.],
-        }, n_jobs=1)
+        # yield 'CLEMS-PCC', select_best(MLPCC(MLEmbedding()), param_grid={
+        #     'regressor__n_estimators': [10, 20, 50],
+        #     'classifier__k': range(1, 10, 2),
+        #     'classifier__s': [.5, .7, 1.],
+        # }, n_jobs=1)
         yield 'LClusterer-PCC', select_best(MLPCC(MLLabelClusterer()), param_grid={
             # 'classifier__k': range(1,10,2),
             # 'classifier__s': [0.5, 0.7, 1.0],
@@ -207,10 +208,10 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
             'criterion': ["gini", "entropy"],
             #'classifier__class_weight': [None, "balanced"],
         })
-        yield 'RF-PCC', select_best(MLPCC(RandomForestClassifier(n_jobs=6)), param_grid={
-            'n_estimators': [10, 100, 200],
-            #'classifier__criterion': ["gini", "entropy"],
-        }, n_jobs=1)
+        # yield 'RF-PCC', select_best(MLPCC(RandomForestClassifier(n_jobs=3)), param_grid={
+        #     'n_estimators': [10, 100, 200],
+        #     #'classifier__criterion': ["gini", "entropy"],
+        # }, n_jobs=3)
     
 
     if subset == "mlq" or subset == "all":

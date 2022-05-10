@@ -23,6 +23,7 @@ from skmultilearn.cluster import MatrixLabelSpaceClusterer
 
 from scipy.sparse import issparse
 import numpy as np
+from scipy.sparse import hstack, csr_matrix
 
 import quapy as qp
 from MultiLabel.mldata import MultilabelledCollection
@@ -182,7 +183,7 @@ class MLGeneralStackedClassifier:
             if self.passthrough:
                 if issparse(X):
                     # X = X.todense()
-                    preds = np.hstack([X.todense(), preds])
+                    preds = hstack([X, csr_matrix(preds)])
                 else:
                     preds = np.hstack([X, preds])
             

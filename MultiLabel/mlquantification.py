@@ -860,7 +860,7 @@ class RakelDQuantifier(ClusterLabelPowersetQuantifier):
             raise ValueError("the size of the cluster is not greater than 1")
         
         cluster_size = math.ceil(self.n_cat / self.n_clusters)
-        self.rc = RandomLabelSpaceClusterer(cluster_size, self.n_clusters, allow_overlap=False)
+        self.clusterer = RandomLabelSpaceClusterer(cluster_size, self.n_clusters, allow_overlap=False)
 
         super().fit(data, **params)
         
