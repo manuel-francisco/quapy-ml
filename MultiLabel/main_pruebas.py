@@ -204,10 +204,10 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
             # 'classifier__s': [0.5, 0.7, 1.0],
             'clusterer__n_clusters': [2, 3, 5, 10, 50],#, 100], #segfault for 100
         }, n_jobs=6)
-        yield 'DT-PCC', select_best(MLPCC(DecisionTreeClassifier()), param_grid={
-            'criterion': ["gini", "entropy"],
-            #'classifier__class_weight': [None, "balanced"],
-        })
+        # yield 'DT-PCC', select_best(MLPCC(DecisionTreeClassifier()), param_grid={
+        #     'criterion': ["gini", "entropy"],
+        #     #'classifier__class_weight': [None, "balanced"],
+        # }, n_jobs=1)
         # yield 'RF-PCC', select_best(MLPCC(RandomForestClassifier(n_jobs=3)), param_grid={
         #     'n_estimators': [10, 100, 200],
         #     #'classifier__criterion': ["gini", "entropy"],
@@ -274,7 +274,7 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
             "regressor__estimator__C": np.array([1., 10, 100, 1000, .1]),
         })
         yield 'MRQ-StackedLinearSVR', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()))), regression=MLStackedRegressor(LinearSVR())), param_grid={
-            "regressor__C": np.array([1., 10, 100, 1000, .1]),
+            "regressor__estimator__C": np.array([1., 10, 100, 1000, .1]),
         })
         yield 'MRQ-ChainedLinearSVR', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()))), regression=RegressorChain(LinearSVR())), param_grid={
             "regressor__base_estimator__C": np.array([1., 10, 100, 1000, .1]),
