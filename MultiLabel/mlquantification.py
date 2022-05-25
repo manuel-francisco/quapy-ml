@@ -803,7 +803,7 @@ class ClusterLabelPowersetQuantifier:
         X, y = data.Xy
         self.n_cat = y.shape[1]
 
-        self.rc = self.clusterer.fit_predict(y, y)
+        # self.rc = self.clusterer.fit_predict(y, y)
         self.partitions = self.clusterer.fit_predict(X, y)
 
         def cat_job(p):

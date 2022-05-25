@@ -62,7 +62,8 @@ def ml_artificial_prevalence_prediction(model,
                                         sample_size,
                                         n_prevalences=21,
                                         repeats=10,
-                                        random_seed=42):
+                                        random_seed=42,
+                                        n_jobs=-1):
 
     nested_test_indexes = []
     with qp.util.temp_seed(random_seed):
@@ -75,7 +76,7 @@ def ml_artificial_prevalence_prediction(model,
     def _predict_batch(test_indexes):
         return _ml_prevalence_predictions(model, test, test_indexes)
 
-    predictions = qp.util.parallel(_predict_batch, nested_test_indexes, n_jobs=-1)
+    predictions = qp.util.parallel(_predict_batch, nested_test_indexes, n_jobs=n_jobs)
     trues, estims = zip(*predictions)
     true_prevs = list(itertools.chain.from_iterable(trues))
     estim_prevs = list(itertools.chain.from_iterable(estims))

@@ -96,6 +96,7 @@ class MLGridSearchQ(MLQuantifier):
                 model, val_split, self.sample_size,
                 n_prevalences=self.n_prevalences,
                 repeats=self.repeats,
+                n_jobs=self.n_jobs,
                 # **commons
             )
         elif self.protocol == 'app' and isinstance(val_split, LabelledCollection):
