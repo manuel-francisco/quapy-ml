@@ -93,8 +93,8 @@ class MLEmbedding:
     def get_params(self):
         params = {}
 
-        for k, v in self.embedder.get_params().items():
-            params[f"embedder__{k}"] = v
+        # for k, v in self.embedder.get_params().items():
+        #     params[f"embedder__{k}"] = v
         
         for k, v in self.regressor.get_params().items():
             params[f"regressor__{k}"] = v
