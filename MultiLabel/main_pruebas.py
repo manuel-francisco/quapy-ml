@@ -5,7 +5,7 @@ signal.signal(signal.SIGUSR1, lambda sig, stack: traceback.print_stack(stack))
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-os.environ['JOBLIB_TEMP_FOLDER'] = '/tmp'
+# os.environ['JOBLIB_TEMP_FOLDER'] = '/tmp'
 
 
 
@@ -81,9 +81,9 @@ TC_DATASETS = ['reuters21578', 'jrcall', 'ohsumed', 'rcv1']
 TC_DATASETS_REDUCED = ['rcv1', 'ohsumed']
 
 
-SPLITS = [ # WARNING: sin jrcall ni rcv1
-    ['mediamill', 'ohsumed', 'tmc2007_500', 'reuters21578'],
-    ['Corel5k', 'yeast', 'enron', 'delicious', 'genbase'], 
+SPLITS = [ # WARNING: sin jrcall
+    ['ohsumed', 'tmc2007_500', 'reuters21578', 'mediamill'],
+    ['yeast', 'enron', 'genbase', 'Corel5k', 'delicious', 'rcv1'], 
     ['medical', 'scene', 'emotions', 'birds', 'bibtex'],
 ]
 
@@ -95,8 +95,8 @@ COREL5K = ['Corel5k']
 
 
 
-def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
-    def select_best(model, param_grid=None, n_jobs=-1, single=False):
+def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __main__
+    def select_best(model, param_grid=None, n_jobs=n_jobs, single=False):
         if not param_grid:
             param_grid = dict(
                 #C=np.array([1., 1.e-03, 1.e-02, 1.e-01, 1.e+01, 1.e+02, 1.e+03]), # np.logspace(-3, 3, 7) but with the 1. first
@@ -109,7 +109,7 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
                 model=model,
                 param_grid=param_grid,
                 sample_size=100,
-                n_jobs=1,
+                n_jobs=1, # this is important, otherwise naive models will have n_proc**2 threads
                 verbose=True,
                 n_prevpoints=n_prevalences,
                 protocol='app',
@@ -188,30 +188,30 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
         #MLC experiments
         yield "MLkNN-MLPCC", select_best(MLPCC(SKMLWrapper(MLkNN())), param_grid={
             'k': range(1,10,2),
-            's': [0.5, 0.7, 1.0]
+            's': [0.5, 0.7, 1.0],
         })
         yield 'ChainPCC', select_best(MLPCC(ClassifierChain(cls())), param_grid={
             'base_estimator__C': np.logspace(-3, 3, 7),
             'base_estimator__class_weight': [None, "balanced"],
         })
-        # yield 'CLEMS-PCC', select_best(MLPCC(MLEmbedding()), param_grid={
-        #     'regressor__n_estimators': [10, 20, 50],
-        #     'classifier__k': range(1, 10, 2),
-        #     'classifier__s': [.5, .7, 1.],
-        # }, n_jobs=1)
+        yield 'CLEMS-PCC', select_best(MLPCC(MLEmbedding()), param_grid={
+            'regressor__n_estimators': [10, 20, 50],
+            'classifier__k': range(1, 10, 2),
+            'classifier__s': [.5, .7, 1.],
+        })
         yield 'LClusterer-PCC', select_best(MLPCC(MLLabelClusterer()), param_grid={
             # 'classifier__k': range(1,10,2),
             # 'classifier__s': [0.5, 0.7, 1.0],
             'clusterer__n_clusters': [2, 3, 5, 10, 50],#, 100], #segfault for 100
-        }, n_jobs=6)
-        # yield 'DT-PCC', select_best(MLPCC(DecisionTreeClassifier()), param_grid={
-        #     'criterion': ["gini", "entropy"],
-        #     #'classifier__class_weight': [None, "balanced"],
-        # }, n_jobs=1)
-        # yield 'RF-PCC', select_best(MLPCC(RandomForestClassifier(n_jobs=3)), param_grid={
-        #     'n_estimators': [10, 100, 200],
-        #     #'classifier__criterion': ["gini", "entropy"],
-        # }, n_jobs=3)
+        })
+        yield 'DT-PCC', select_best(MLPCC(DecisionTreeClassifier()), param_grid={
+            'criterion': ["gini", "entropy"],
+            #'classifier__class_weight': [None, "balanced"],
+        })
+        yield 'RF-PCC', select_best(MLPCC(RandomForestClassifier(n_jobs=1)), param_grid={
+            'n_estimators': [10, 100, 200],
+            #'classifier__criterion': ["gini", "entropy"],
+        })
     
 
     if subset == "mlq" or subset == "all":
@@ -258,7 +258,7 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
             "regressor__n_estimators": [10, 100, 200],
             'estimator__C': np.array([1., 10, 100, 1000, .1]),
             'estimator__class_weight': ["balanced", None],
-        }, n_jobs=-1)
+        })
         # yield 'MRQ-AdaBoostChain', select_best(MLRegressionQuantification(MLNaiveQuantifier(PCC(cls())), regression=RegressorChain(AdaBoostRegressor()), **common), param_grid={
         #     'regressor__base_estimator__n_estimators': [10, 50, 100, 200],
         #     'estimator__C': np.array([1., 10, 100, 1000, .1]),
@@ -270,9 +270,10 @@ def models(subset, n_prevalences=101, repeats=25): # CAMBIAR EN __main__
         #     'estimator__class_weight': ["balanced", None],
         # })
         
-        yield 'MRQ-LinearSVR', select_best(MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), regression=MultiOutputRegressor(LinearSVR())), param_grid={
-            "regressor__estimator__C": np.array([1., 10, 100, 1000, .1]),
-        })
+        # yield 'MRQ-PCC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()), single=True)), **common), param_grid=MRQ_grid)
+        # yield 'MRQ-LinearSVR', select_best(MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), regression=MultiOutputRegressor(LinearSVR())), param_grid={
+        #     "regressor__estimator__C": np.array([1., 10, 100, 1000, .1]),
+        # })
         yield 'MRQ-StackedLinearSVR', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()))), regression=MLStackedRegressor(LinearSVR())), param_grid={
             "regressor__estimator__C": np.array([1., 10, 100, 1000, .1]),
         })
@@ -456,7 +457,7 @@ def load_results(result_path):
     return results
 
 
-def run_experiment(dataset_name, train, test, model_name, model, n_prevalences=101, repeats=25):
+def run_experiment(dataset_name, train, test, model_name, model, n_prevalences=101, repeats=25, n_jobs=-1):
     result_path = f'{opt.results}/{dataset_name}_{model_name}.pkl'
     if already_run(result_path):
         return True
@@ -468,7 +469,7 @@ def run_experiment(dataset_name, train, test, model_name, model, n_prevalences=1
     best_params = model.get_params()
 
     results_npp = ml_natural_prevalence_prediction(model, test, sample_size, repeats=n_prevalences*repeats)
-    results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=n_prevalences, repeats=repeats)
+    results_app = ml_artificial_prevalence_prediction(model, test, sample_size, n_prevalences=n_prevalences, repeats=repeats, n_jobs=n_jobs)
 
     save_results(results_npp, results_app, result_path, train.prevalence(), best_params)
     return False
@@ -480,14 +481,13 @@ if __name__ == '__main__':
                         help=f'path where to store the results')
     parser.add_argument('--subset', type=str, default="all", metavar="str",
                         help="subset of models to run, default: all, options: [general, mlc, mlq, all]")
+    parser.add_argument('--njobs', type=int, default=-1, metavar="int",
+                        help="number of threads to use, default: -1 (all)")
     opt = parser.parse_args()
 
     os.makedirs(opt.results, exist_ok=True)
 
 
-    # for datasetname, (modelname,model) in itertools.product(ALLTABLE[::-1], models()):
-    #     run_experiment(datasetname, modelname, model)
-    
     with open("whoami.txt", 'r') as f:
         who = f.readline().strip()
         if who == "all":
@@ -542,39 +542,36 @@ if __name__ == '__main__':
         else:
             print(f"There was not any particular number of repeats for dataset {dataset_name}, using defaults ({repeats}).")
 
-        for modelname, model in models(opt.subset, n_prevalences=n_prevalences_grid, repeats=repeats_grid):
-            if dataset_name == "delicious" and modelname == "CLEMS-PCC": #FIXME
-                continue #FIXME
-            
-            # try:
-            skipped = run_experiment(dataset_name, train, test, modelname, model, n_prevalences, repeats)
+        for modelname, model in models(opt.subset, n_prevalences=n_prevalences_grid, repeats=repeats_grid, n_jobs=opt.njobs):
+            try:
+                skipped = run_experiment(dataset_name, train, test, modelname, model, n_prevalences, repeats, n_jobs=opt.njobs)
 
-            # use the trained model to run its MRQ version
-            if not skipped and not modelname.startswith("MRQ") and "CVStack" in modelname:
-                common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
-                
-                modelname = f'MRQ-{modelname}'
-                mrq_model = MLRegressionQuantification(model, **common)
-                mrq_model.trained_ = True
-                mrq_model.estimator_params_changed_ = False
-                mrq_model.reg_params_changed_ = True
-                gridq = MLGridSearchQ(
-                    model=mrq_model,
-                    param_grid={
-                        'regressor__estimator__C': np.array([1., 10, 100, 1000, .1]),
-                    },
-                    sample_size=100,
-                    n_jobs=-1,
-                    verbose=True,
-                    n_prevalences=n_prevalences,
-                    repeats=repeats,
-                )
+                # use the trained model to run its MRQ version
+                if not skipped and not modelname.startswith("MRQ") and "CVStack" in modelname:
+                    common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
+                    
+                    modelname = f'MRQ-{modelname}'
+                    mrq_model = MLRegressionQuantification(model, **common)
+                    mrq_model.trained_ = True
+                    mrq_model.estimator_params_changed_ = False
+                    mrq_model.reg_params_changed_ = True
+                    gridq = MLGridSearchQ(
+                        model=mrq_model,
+                        param_grid={
+                            'regressor__estimator__C': np.array([1., 10, 100, 1000, .1]),
+                        },
+                        sample_size=100,
+                        n_jobs=-1,
+                        verbose=True,
+                        n_prevalences=n_prevalences,
+                        repeats=repeats,
+                    )
 
-                run_experiment(dataset_name, train, test, modelname, gridq, n_prevalences, repeats)
+                    run_experiment(dataset_name, train, test, modelname, gridq, n_prevalences, repeats)
 
-            # except Exception as e:
-            #     print(f"Well there was some problem with {dataset_name} x {modelname}")
-            #     print(e)
+            except Exception as e:
+                print(f"Well there was some problem with {dataset_name} x {modelname}")
+                print(e)
 
     
 
