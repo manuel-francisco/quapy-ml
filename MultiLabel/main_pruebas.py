@@ -203,8 +203,8 @@ def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __mai
         yield 'LClusterer-PCC', select_best(MLPCC(MLLabelClusterer()), param_grid={
             # 'classifier__k': range(1,10,2),
             # 'classifier__s': [0.5, 0.7, 1.0],
-            # 'clusterer__n_clusters': [2, 3, 5, 10, 50],#, 100], #segfault for 100
-            'clusterer__n_clusters': [5, 10, 50],  # , 100], #segfault for 100
+            'clusterer__n_clusters': [2, 3, 5, 10, 50],#, 100], #segfault for 100
+            # 'clusterer__n_clusters': [5, 10, 50],  # , 100], #segfault for 100
         })
         yield 'DT-PCC', select_best(MLPCC(DecisionTreeClassifier()), param_grid={
             'criterion': ["gini", "entropy"],
