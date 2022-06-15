@@ -13,7 +13,7 @@ from skmultilearn.ensemble import LabelSpacePartitioningClassifier
 from skmultilearn.problem_transform import LabelPowerset
 from skmultilearn.cluster.networkx import NetworkXLabelGraphClusterer
 from skmultilearn.cluster.base import LabelCooccurrenceGraphBuilder
-from skmultilearn.embedding import CLEMS, EmbeddingClassifier
+# from skmultilearn.embedding import CLEMS, EmbeddingClassifier
 
 # from skmultilearn.embedding import SKLearnEmbedder, EmbeddingClassifier
 from sklearn.manifold import SpectralEmbedding
@@ -28,6 +28,7 @@ from scipy.sparse import hstack, csr_matrix
 import quapy as qp
 from MultiLabel.mldata import MultilabelledCollection
 
+
 class SKMLWrapper:
     def __init__(self, skmlclf):
         self.model_ = skmlclf
@@ -40,23 +41,25 @@ class SKMLWrapper:
         return np.array(aux)
     
     def fit(self, X, y, *args, **kwargs):
-        return self.model_.fit(np.matrix(SKMLWrapper._todense(X)), np.matrix(SKMLWrapper._todense(y)), *args, **kwargs)
+        # return self.model_.fit(np.matrix(SKMLWrapper._todense(X)), np.matrix(SKMLWrapper._todense(y)), *args, **kwargs)
+        return self.model_.fit(X, np.matrix(SKMLWrapper._todense(y)), *args, **kwargs)
+
     
     def predict(self, X, *args, **kwargs):
-        return SKMLWrapper._todense(self.model_.predict(SKMLWrapper._todense(X), *args, **kwargs))
+        return SKMLWrapper._todense(self.model_.predict(X, *args, **kwargs))
     
     def predict_proba(self, X, *args, **kwargs):
-        return SKMLWrapper._todense(self.model_.predict_proba(np.matrix(SKMLWrapper._todense(X)), *args, **kwargs))
-        probas = SKMLWrapper._todense(self.model_.predict_proba(SKMLWrapper._todense(X), *args, **kwargs))
-        
-        n_instances, n_classes = probas.shape
-        shaped_probas = [
-            np.array([
-                1-probas[:, i], probas[:, i]
-            ]).reshape(2, n_instances).T for i in range(n_classes)
-        ]
-
-        return shaped_probas
+        return SKMLWrapper._todense(self.model_.predict_proba(X, *args, **kwargs))
+        # probas = SKMLWrapper._todense(self.model_.predict_proba(SKMLWrapper._todense(X), *args, **kwargs))
+        #
+        # n_instances, n_classes = probas.shape
+        # shaped_probas = [
+        #     np.array([
+        #         1-probas[:, i], probas[:, i]
+        #     ]).reshape(2, n_instances).T for i in range(n_classes)
+        # ]
+        #
+        # return shaped_probas
     
     def set_params(self, **parameters):
         self.model_.set_params(**parameters)
@@ -66,8 +69,13 @@ class SKMLWrapper:
 
 
 class MLEmbedding:
-    def __init__(self, embedder=CLEMS(qp.error.ae, False, params=dict(n_jobs=6)), regressor=RandomForestRegressor(n_estimators=10, n_jobs=6), classifier=MLkNN(k=5)):
-        self.embedder = embedder
+    # def __init__(self, embedder=CLEMS(qp.error.ae, False, params=dict(n_jobs=6)), regressor=RandomForestRegressor(n_estimators=10, n_jobs=6), classifier=MLkNN(k=5)):
+    def __init__(self, embedder=None, regressor=RandomForestRegressor(n_estimators=10, n_jobs=6), classifier=MLkNN(k=5)):
+        from skmultilearn.embedding import CLEMS, EmbeddingClassifier
+        if embedder is None:
+            self.embedder = CLEMS(qp.error.ae, False, params=dict(n_jobs=6))
+        else:
+            self.embedder = embedder
         self.regressor = regressor
         self.classifier = classifier
         self.learner = EmbeddingClassifier(self.embedder, self.regressor, self.classifier)

@@ -67,10 +67,11 @@ def cls():
 def calibratedCls():
     return CalibratedClassifierCV(cls())
 
+
 sample_size = 100 #MIRAR run_experiment
 n_samples = 5000 #MIRAR run_experiment
 
-picklepath = 'pickles_manuel'
+picklepath = 'pickles'
 
 #SKMULTILEARN_ALL_DATASETS = sorted(set([x[0] for x in available_data_sets().keys()]))
 SKMULTILEARN_ALL_DATASETS = ['Corel5k', 'bibtex', 'birds', 'delicious', 'emotions', 'enron', 'genbase', 'mediamill', 'medical', 'scene', 'tmc2007_500', 'yeast']
@@ -194,15 +195,16 @@ def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __mai
             'base_estimator__C': np.logspace(-3, 3, 7),
             'base_estimator__class_weight': [None, "balanced"],
         })
-        yield 'CLEMS-PCC', select_best(MLPCC(MLEmbedding()), param_grid={
-            'regressor__n_estimators': [10, 20, 50],
-            'classifier__k': range(1, 10, 2),
-            'classifier__s': [.5, .7, 1.],
-        })
+        # yield 'CLEMS-PCC', select_best(MLPCC(MLEmbedding()), param_grid={
+        #     'regressor__n_estimators': [10, 20, 50],
+        #     'classifier__k': range(1, 10, 2),
+        #     'classifier__s': [.5, .7, 1.],
+        # })
         yield 'LClusterer-PCC', select_best(MLPCC(MLLabelClusterer()), param_grid={
             # 'classifier__k': range(1,10,2),
             # 'classifier__s': [0.5, 0.7, 1.0],
-            'clusterer__n_clusters': [2, 3, 5, 10, 50],#, 100], #segfault for 100
+            # 'clusterer__n_clusters': [2, 3, 5, 10, 50],#, 100], #segfault for 100
+            'clusterer__n_clusters': [5, 10, 50],  # , 100], #segfault for 100
         })
         yield 'DT-PCC', select_best(MLPCC(DecisionTreeClassifier()), param_grid={
             'criterion': ["gini", "entropy"],
@@ -458,6 +460,10 @@ def load_results(result_path):
 
 
 def run_experiment(dataset_name, train, test, model_name, model, n_prevalences=101, repeats=25, n_jobs=-1):
+
+    if dataset_name != 'rcv1': return False
+    if model_name != 'LClusterer-PCC': return False
+
     result_path = f'{opt.results}/{dataset_name}_{model_name}.pkl'
     if already_run(result_path):
         return True
@@ -543,35 +549,35 @@ if __name__ == '__main__':
             print(f"There was not any particular number of repeats for dataset {dataset_name}, using defaults ({repeats}).")
 
         for modelname, model in models(opt.subset, n_prevalences=n_prevalences_grid, repeats=repeats_grid, n_jobs=opt.njobs):
-            try:
-                skipped = run_experiment(dataset_name, train, test, modelname, model, n_prevalences, repeats, n_jobs=opt.njobs)
+            # try:
+            skipped = run_experiment(dataset_name, train, test, modelname, model, n_prevalences, repeats, n_jobs=opt.njobs)
 
-                # use the trained model to run its MRQ version
-                if not skipped and not modelname.startswith("MRQ") and "CVStack" in modelname:
-                    common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
-                    
-                    modelname = f'MRQ-{modelname}'
-                    mrq_model = MLRegressionQuantification(model, **common)
-                    mrq_model.trained_ = True
-                    mrq_model.estimator_params_changed_ = False
-                    mrq_model.reg_params_changed_ = True
-                    gridq = MLGridSearchQ(
-                        model=mrq_model,
-                        param_grid={
-                            'regressor__estimator__C': np.array([1., 10, 100, 1000, .1]),
-                        },
-                        sample_size=100,
-                        n_jobs=-1,
-                        verbose=True,
-                        n_prevalences=n_prevalences,
-                        repeats=repeats,
-                    )
+            # use the trained model to run its MRQ version
+            if not skipped and not modelname.startswith("MRQ") and "CVStack" in modelname:
+                common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
 
-                    run_experiment(dataset_name, train, test, modelname, gridq, n_prevalences, repeats)
+                modelname = f'MRQ-{modelname}'
+                mrq_model = MLRegressionQuantification(model, **common)
+                mrq_model.trained_ = True
+                mrq_model.estimator_params_changed_ = False
+                mrq_model.reg_params_changed_ = True
+                gridq = MLGridSearchQ(
+                    model=mrq_model,
+                    param_grid={
+                        'regressor__estimator__C': np.array([1., 10, 100, 1000, .1]),
+                    },
+                    sample_size=100,
+                    n_jobs=-1,
+                    verbose=True,
+                    n_prevalences=n_prevalences,
+                    repeats=repeats,
+                )
 
-            except Exception as e:
-                print(f"Well there was some problem with {dataset_name} x {modelname}")
-                print(e)
+                run_experiment(dataset_name, train, test, modelname, gridq, n_prevalences, repeats)
+
+            # except Exception as e:
+            #     print(f"Well there was some problem with {dataset_name} x {modelname}")
+            #     print(e)
 
     
 

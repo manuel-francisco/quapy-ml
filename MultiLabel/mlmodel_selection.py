@@ -165,10 +165,10 @@ class MLGridSearchQ(MLQuantifier):
             except TimeoutError:
                 print(f'timeout reached for config {params}')
                 some_timeouts = True
-            except Exception as e:
-                print(f"it seems like there's been a problem with this set of params {params}. Skiping")
-                print(e)
-                continue
+            # except Exception as e:
+            #     print(f"it seems like there's been a problem with this set of params {params}. Skiping")
+            #     print(e)
+            #     continue
 
         if self.best_score_ is None and some_timeouts:
             raise TimeoutError('all jobs took more than the timeout time to end')
