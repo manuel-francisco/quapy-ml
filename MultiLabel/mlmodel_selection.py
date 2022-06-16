@@ -129,6 +129,8 @@ class MLGridSearchQ(MLQuantifier):
         model = self.model
         n_jobs = self.n_jobs
 
+        print(self.param_grid)
+
         if self.timeout > 0:
             def handler(signum, frame):
                 self.sout('timeout reached')
