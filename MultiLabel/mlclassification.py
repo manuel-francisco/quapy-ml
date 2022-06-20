@@ -113,10 +113,16 @@ class MLEmbedding:
         return params
     
     def set_params(self, **params):
-        self.embedder.set_params(**{k.removeprefix("embedder__"):v for k, v in params.items() if k.startswith("embedder__")})
-        self.regressor.set_params(**{k.removeprefix("regressor__"):v for k, v in params.items() if k.startswith("regressor__")})
-        self.classifier.set_params(**{k.removeprefix("classifier__"):v for k, v in params.items() if k.startswith("classifier__")})
+        self.embedder.set_params(**{removeprefix(k, "embedder__"):v for k, v in params.items() if k.startswith("embedder__")})
+        self.regressor.set_params(**{removeprefix(k, "regressor__"):v for k, v in params.items() if k.startswith("regressor__")})
+        self.classifier.set_params(**{removeprefix(k, "classifier__"):v for k, v in params.items() if k.startswith("classifier__")})
 
+
+def removeprefix(s:str, prefix:str):
+    if s.startswith(prefix):
+        return s.replace(prefix, '')
+    else:
+        return s
 
 class MLLabelClusterer:
     def __init__(self, classifier=MLkNN(k=5), clusterer=MatrixLabelSpaceClusterer(clusterer=KMeans(n_clusters=3))):
@@ -155,7 +161,7 @@ class MLLabelClusterer:
     
     def set_params(self, **params):
         self.clusterer.set_params(**{k:v for k, v in params.items() if k.startswith("clusterer__")})
-        self.classifier.set_params(**{k.removeprefix("classifier__"):v for k, v in params.items() if k.startswith("classifier__")})
+        self.classifier.set_params(**{removeprefix(k, "classifier__"):v for k, v in params.items() if k.startswith("classifier__")})
 
 
 class MLGeneralStackedClassifier:
@@ -235,7 +241,7 @@ class MLGeneralStackedClassifier:
         
         # params = {f"estimator__{k}":v for k, v in parameters.items()}
         # self.base.set_params(**params)
-        params = {k.removeprefix("meta__"):v for k,v in parameters.items() if k.startswith("meta__")}
+        params = {removeprefix(k, "meta__"):v for k,v in parameters.items() if k.startswith("meta__")}
         self.meta.set_params(**params)
 
     def get_params(self, deep=True):
