@@ -195,11 +195,11 @@ def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __mai
             'base_estimator__C': np.logspace(-3, 3, 7),
             'base_estimator__class_weight': [None, "balanced"],
         })
-        # yield 'CLEMS-PCC', select_best(MLPCC(MLEmbedding()), param_grid={
-        #     'regressor__n_estimators': [10, 20, 50],
-        #     'classifier__k': range(1, 10, 2),
-        #     'classifier__s': [.5, .7, 1.],
-        # })
+        yield 'CLEMS-PCC', select_best(MLPCC(MLEmbedding()), param_grid={
+            'regressor__n_estimators': [10, 20, 50],
+            'classifier__k': range(1, 10, 2),
+            'classifier__s': [.5, .7, 1.],
+        })
         yield 'LClusterer-PCC', select_best(MLPCC(MLLabelClusterer()), param_grid={
             # 'classifier__k': range(1,10,2),
             # 'classifier__s': [0.5, 0.7, 1.0],
@@ -459,8 +459,8 @@ def load_results(result_path):
 
 def run_experiment(dataset_name, train, test, model_name, model, n_prevalences=101, repeats=25, n_jobs=-1):
 
-    if dataset_name != 'rcv1': return False
-    if model_name != 'LClusterer-PCC': return False
+    if dataset_name != 'delicious': return False
+    if model_name != 'CLEMS-PCC': return False
 
     result_path = f'{opt.results}/{dataset_name}_{model_name}.pkl'
     if already_run(result_path):
