@@ -70,10 +70,10 @@ class SKMLWrapper:
 
 class MLEmbedding:
     # def __init__(self, embedder=CLEMS(qp.error.ae, False, params=dict(n_jobs=6)), regressor=RandomForestRegressor(n_estimators=10, n_jobs=6), classifier=MLkNN(k=5)):
-    def __init__(self, embedder=None, regressor=RandomForestRegressor(n_estimators=10, n_jobs=6), classifier=MLkNN(k=5)):
+    def __init__(self, embedder=None, regressor=RandomForestRegressor(n_estimators=10, n_jobs=1), classifier=MLkNN(k=5)):
         from skmultilearn.embedding import CLEMS, EmbeddingClassifier
         if embedder is None:
-            self.embedder = CLEMS(qp.error.ae, False, params=dict(n_jobs=6))
+            self.embedder = CLEMS(qp.error.ae, False, params=dict(n_jobs=1))
         else:
             self.embedder = embedder
         self.regressor = regressor
