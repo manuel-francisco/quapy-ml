@@ -13,7 +13,7 @@ from skmultilearn.ensemble import LabelSpacePartitioningClassifier
 from skmultilearn.problem_transform import LabelPowerset
 from skmultilearn.cluster.networkx import NetworkXLabelGraphClusterer
 from skmultilearn.cluster.base import LabelCooccurrenceGraphBuilder
-# from skmultilearn.embedding import CLEMS, EmbeddingClassifier
+from skmultilearn.embedding import CLEMS, EmbeddingClassifier
 
 # from skmultilearn.embedding import SKLearnEmbedder, EmbeddingClassifier
 from sklearn.manifold import SpectralEmbedding
@@ -70,8 +70,7 @@ class SKMLWrapper:
 
 class MLEmbedding:
     # def __init__(self, embedder=CLEMS(qp.error.ae, False, params=dict(n_jobs=6)), regressor=RandomForestRegressor(n_estimators=10, n_jobs=6), classifier=MLkNN(k=5)):
-    def __init__(self, embedder=None, regressor=RandomForestRegressor(n_estimators=10, n_jobs=1), classifier=MLkNN(k=5)):
-        from skmultilearn.embedding import CLEMS, EmbeddingClassifier
+    def __init__(self, embedder=None, regressor=RandomForestRegressor(n_estimators=10, n_jobs=5), classifier=MLkNN(k=5)):
         if embedder is None:
             self.embedder = CLEMS(qp.error.ae, False, params=dict(n_jobs=1))
         else:
@@ -88,15 +87,17 @@ class MLEmbedding:
         return np.array(aux)
     
     def fit(self, X, y):
-        Xtr, ytr = MLEmbedding._todense(X), MLEmbedding._todense(y)
-        return self.learner.fit(Xtr, ytr)
+        # X, y = MLEmbedding._todense(X), MLEmbedding._todense(y)
+        return self.learner.fit(X, y)
     
     def predict(self, instances):
-        results = self.learner.predict(MLEmbedding._todense(instances))
+        # instances = MLEmbedding._todense(instances)
+        results = self.learner.predict(instances)
         return MLEmbedding._todense(results)
     
     def predict_proba(self, instances):
-        return MLEmbedding._todense(self.learner.predict_proba(MLEmbedding._todense(instances)))
+        instances = MLEmbedding._todense(instances)
+        return MLEmbedding._todense(self.learner.predict_proba(instances))
 
     def get_params(self):
         params = {}

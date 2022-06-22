@@ -2,7 +2,7 @@ import itertools
 import signal
 from copy import deepcopy
 from typing import Union, Callable
-
+from time import time
 import quapy as qp
 from quapy.data.base import LabelledCollection
 from quapy.evaluation import artificial_prevalence_prediction, natural_prevalence_prediction
@@ -149,13 +149,15 @@ class MLGridSearchQ(MLQuantifier):
                 signal.alarm(self.timeout)
 
             try:
+                tinit = time()
                 # overrides default parameters with the parameters being explored at this iteration
                 model.set_params(**params)
                 model.fit(training)
                 true_prevalences, estim_prevalences = self.__generate_predictions(model, val_split)
                 errs = [self.error(true_prev_i, estim_prev_i) for true_prev_i, estim_prev_i in zip(true_prevalences, estim_prevalences)]
                 score = np.mean(errs)
-                self.sout(f'checking hyperparams={params} got {self.error.__name__} score {score:.5f}')
+                tend = time()-tinit
+                self.sout(f'checking hyperparams={params} got {self.error.__name__} score {score:.5f} [took {tend:.3f}s]')
                 if self.best_score_ is None or score < self.best_score_:
                     self.best_score_ = score
                     self.best_params_ = params

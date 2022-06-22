@@ -197,8 +197,13 @@ def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __mai
         })
         yield 'CLEMS-PCC', select_best(MLPCC(MLEmbedding()), param_grid={
             'regressor__n_estimators': [10, 20, 50],
-            'classifier__k': range(1, 10, 2),
-            'classifier__s': [.5, .7, 1.],
+            'classifier__k': range(5,10,2), #range(1, 10, 2),
+            'classifier__s': [.7], #[.5, .7, 1.],
+            # best params found so far: s=.7
+            # exploring k:
+            # k=1 0.01785
+            # k=3 0.01798
+            # ... runing from 5-10 steps of 2, njobs in regressor=5, todense removed!
         })
         yield 'LClusterer-PCC', select_best(MLPCC(MLLabelClusterer()), param_grid={
             # 'classifier__k': range(1,10,2),
