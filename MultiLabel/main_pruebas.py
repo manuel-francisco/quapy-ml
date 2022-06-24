@@ -125,6 +125,7 @@ def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __mai
                 verbose=True,
                 n_prevalences=n_prevalences,
                 repeats=repeats,
+                refit=True
             )
     
 
@@ -197,19 +198,23 @@ def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __mai
         })
         yield 'CLEMS-PCC', select_best(MLPCC(MLEmbedding()), param_grid={
             'regressor__n_estimators': [10, 20, 50],
-            'classifier__k': range(5,10,2), #range(1, 10, 2),
-            'classifier__s': [.7], #[.5, .7, 1.],
+            'classifier__k': range(1, 10, 2),
+            'classifier__s': [.5, .7, 1.],
             # best params found so far: s=.7
             # exploring k:
             # k=1 0.01785
-            # k=3 0.01798
+            # k=3 0.01798; with k>3 there is 0.018... always
             # ... runing from 5-10 steps of 2, njobs in regressor=5, todense removed!
+            # k=1 seems the best choice; testing regressor__n_estimators 20 and 50 (all other results corresponds to 10)
+            # estimators=20: 0.01789
+            # estimators=50: 0.01784
+            # gana: k=1, s=0.7, estimators=50 (pero muere con esta configuración en refit, así que le meto el refit=False)
         })
         yield 'LClusterer-PCC', select_best(MLPCC(MLLabelClusterer()), param_grid={
-            # 'classifier__k': range(1,10,2),
-            # 'classifier__s': [0.5, 0.7, 1.0],
-            # 'clusterer__n_clusters': [2, 3, 5, 10, 50],#, 100], #segfault for 100
-            'clusterer__n_clusters': [2],  #reducing for RCV1-v2
+            'classifier__k': range(1,10,2),
+            'classifier__s': [0.5, 0.7, 1.0],
+            'clusterer__n_clusters': [2, 3, 5, 10, 50],#, 100], #segfault for 100
+            # 'clusterer__n_clusters': [2],  #reducing for RCV1-v2
         })
         yield 'DT-PCC', select_best(MLPCC(DecisionTreeClassifier()), param_grid={
             'criterion': ["gini", "entropy"],
