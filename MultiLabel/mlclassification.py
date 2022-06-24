@@ -191,7 +191,6 @@ class MLGeneralStackedClassifier:
             if self.cv > 0:
                 preds = cross_val_predict(self.base, X, y, cv=self.cv, n_jobs=self.n_jobs, method="predict_proba")
             else:
-                # shouldn't we split train/val here?
                 self.base.fit(X, y)
                 preds = self.base.predict_proba(X)
             
