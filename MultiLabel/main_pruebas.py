@@ -133,18 +133,15 @@ def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __mai
         # common={'sample_size': sample_size, 'n_samples': n_samples, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
 
         # naives (Binary Classification + Binary Quantification)
-        yield 'NaiveCC', MLNaiveAggregativeQuantifier(select_best(CC(cls()), single=True))
-        yield 'NaivePCC', MLNaiveAggregativeQuantifier(select_best(PCC(cls()), single=True))
-        yield 'NaiveACC', MLNaiveAggregativeQuantifier(select_best(ACC(cls()), single=True))
-        yield 'NaivePACC', MLNaiveAggregativeQuantifier(select_best(PACC(cls()), single=True))
-        # yield 'NaiveHDy', MLNaiveAggregativeQuantifier(select_best(HDy(cls()), single=True))
+        #yield 'NaiveCC', MLNaiveAggregativeQuantifier(select_best(CC(cls()), single=True))
+        #yield 'NaivePCC', MLNaiveAggregativeQuantifier(select_best(PCC(cls()), single=True))
+        #yield 'NaiveACC', MLNaiveAggregativeQuantifier(select_best(ACC(cls()), single=True))
+        #yield 'NaivePACC', MLNaiveAggregativeQuantifier(select_best(PACC(cls()), single=True))
+        yield 'NaiveHDy', MLNaiveAggregativeQuantifier(select_best(HDy(cls()), single=True))
         # yield 'NaiveSLDNoCalibrado', MLNaiveAggregativeQuantifier(select_best(EMQ(cls()), single=True))
-        # yield 'NaiveSLD', MLNaiveAggregativeQuantifier(select_best(EMQ(calibratedCls()), param_grid=dict(
-        #         base_estimator__C=np.array([1., 1.e-03, 1.e-02, 1.e-01, 1.e+01, 1.e+02, 1.e+03]),
-        #         base_estimator__class_weight=["balanced", None],
-        #     ), single=True))
+        yield 'NaiveSLD', MLNaiveAggregativeQuantifier(select_best(EMQ(calibratedCls()), single=True))
 
-        # yield 'StackCC', select_best(MLCC(MLStackedClassifier(cls())))
+        #yield 'StackCC', select_best(MLCC(MLStackedClassifier(cls())))
         # yield 'StackPCC', select_best(MLPCC(MLStackedClassifier(cls())))
         # yield 'StackACC', select_best(MLACC(MLStackedClassifier(cls())))
         # yield 'StackPACC', select_best(MLPACC(MLStackedClassifier(cls())))
@@ -155,20 +152,26 @@ def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __mai
             'norm': [True, False],
         }
 
-        yield 'CVStackCC', select_best(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
-        yield 'CVStackPCC', select_best(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
-        yield 'CVStackACC', select_best(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
-        yield 'CVStackPACC', select_best(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        #yield 'CVStackCC', select_best(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        #yield 'CVStackPCC', select_best(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        #yield 'CVStackACC', select_best(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        #yield 'CVStackPACC', select_best(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
+        #yield 'CVStackHDy', select_best(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)),
+        #                                param_grid=CVStack_grid)
+        #yield 'CVStackSLD', select_best(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)),
+        #                                 param_grid=CVStack_grid)
 
         common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
         MRQ_grid = {
             'regressor__estimator__C': np.array([1., 10, 100, 1000, .1]),
         }
 
-        yield 'MRQ-CC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(CC(cls()), single=True)), **common), param_grid=MRQ_grid)
-        yield 'MRQ-PCC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()), single=True)), **common), param_grid=MRQ_grid)
-        yield 'MRQ-ACC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(ACC(cls()), single=True)), **common), param_grid=MRQ_grid)
-        yield 'MRQ-PACC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PACC(cls()), single=True)), **common), param_grid=MRQ_grid)
+        #yield 'MRQ-CC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(CC(cls()), single=True)), **common), param_grid=MRQ_grid)
+        #yield 'MRQ-PCC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PCC(cls()), single=True)), **common), param_grid=MRQ_grid)
+        #yield 'MRQ-ACC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(ACC(cls()), single=True)), **common), param_grid=MRQ_grid)
+        #yield 'MRQ-PACC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PACC(cls()), single=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-HDy', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(HDy(cls()), single=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-SLD', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(EMQ(calibratedCls()), single=True)), **common), param_grid=MRQ_grid)
         # yield 'MRQ-StackCC', MLRegressionQuantification(select_best(MLCC(MLStackedClassifier(cls()))), **common)
         # yield 'MRQ-StackPCC', MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), **common)
         # yield 'MRQ-StackACC', MLRegressionQuantification(select_best(MLACC(MLStackedClassifier(cls()))), **common)
@@ -181,10 +184,10 @@ def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __mai
             'regressor__estimator__C': np.array([1., 10, 100, 1000, .1]),
         }
 
-        yield 'MRQ-CVStackCC', select_best(MLRegressionQuantification(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
-        yield 'MRQ-CVStackPCC', select_best(MLRegressionQuantification(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
-        yield 'MRQ-CVStackACC', select_best(MLRegressionQuantification(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
-        yield 'MRQ-CVStackPACC', select_best(MLRegressionQuantification(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        #yield 'MRQ-CVStackCC', select_best(MLRegressionQuantification(MLCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        #yield 'MRQ-CVStackPCC', select_best(MLRegressionQuantification(MLPCC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        #yield 'MRQ-CVStackACC', select_best(MLRegressionQuantification(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
+        #yield 'MRQ-CVStackPACC', select_best(MLRegressionQuantification(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), **common), param_grid=MRQ_grid)
     
     if subset == "mlc" or subset == "all":
         #MLC experiments
@@ -469,9 +472,6 @@ def load_results(result_path):
 
 def run_experiment(dataset_name, train, test, model_name, model, n_prevalences=101, repeats=25, n_jobs=-1):
 
-    if dataset_name != 'delicious': return False
-    if model_name != 'CLEMS-PCC': return False
-
     result_path = f'{opt.results}/{dataset_name}_{model_name}.pkl'
     if already_run(result_path):
         return True
@@ -493,7 +493,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Experiments for multi-label quantification')
     parser.add_argument('--results', type=str, default='./results_generales', metavar='str',
                         help=f'path where to store the results')
-    parser.add_argument('--subset', type=str, default="all", metavar="str",
+    parser.add_argument('--subset', type=str, default="general", metavar="str",
                         help="subset of models to run, default: all, options: [general, mlc, mlq, all]")
     parser.add_argument('--njobs', type=int, default=-1, metavar="int",
                         help="number of threads to use, default: -1 (all)")
