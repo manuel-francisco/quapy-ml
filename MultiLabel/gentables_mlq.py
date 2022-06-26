@@ -95,14 +95,14 @@ model_subsets = {
         'MRQ-CVStackCC', 'MRQ-CVStackPCC', 'MRQ-CVStackACC', 'MRQ-CVStackPACC',
     ],
     "mlc": [
-        'MLkNN-MLPCC', 'ChainPCC', 'CLEMS-PCC', 'LClusterer-PCC', 'DT-PCC', 'RF-PCC',
+        'MLkNN-MLPCC', 'ChainPCC', 'CLEMS-PCC', 'LClusterer-PCC', 'DT-PCC', 'RF-PCC', 'CVStackPCC',
     ],
     "mlq": [
         'RakelD-PCC', 'KMeansClustersPowerSet-PCC', 'MRQ-PCC',
     ],
     "mlq-reg": [
         'MRQ-Ridge', 'MRQ-MultitaskLasso', 'MRQ-RandomForest',
-        'MRQ-LinearSVR', 'MRQ-StackedLinearSVR', 'MRQ-ChainedLinearSVR',
+        'MRQ-PCC', 'MRQ-StackedLinearSVR', 'MRQ-ChainedLinearSVR',
     ]
 }
 
@@ -186,21 +186,21 @@ def save_table(table, path, filtered_models):
     'tmc2007_5002': 'tmc2007\_5002',}
     method_replace = {
         "NaiveCC": "\BC\SEP\BQ",
-        "StackCC": "\MLC\SEP\BQ",
+        "CVStackCC": "\MLC\SEP\BQ",
         "MRQ-CC": "\BC\SEP\MLQ",
-        "MRQ-StackCC": "\MLC\SEP\MLQ",
+        "MRQ-CVStackCC": "\MLC\SEP\MLQ",
         "NaivePCC": "\BC\SEP\BQ",
-        "StackPCC": "\MLC\SEP\BQ",
+        "CVStackPCC": "\MLC\SEP\BQ",
         "MRQ-PCC": "\BC\SEP\MLQ",
-        "MRQ-StackPCC": "\MLC\SEP\MLQ",
+        "MRQ-CVStackPCC": "\MLC\SEP\MLQ",
         "NaiveACC": "\BC\SEP\BQ",
-        "StackACC": "\MLC\SEP\BQ",
+        "CVStackACC": "\MLC\SEP\BQ",
         "MRQ-ACC": "\BC\SEP\MLQ",
-        "MRQ-StackACC": "\MLC\SEP\MLQ",
+        "MRQ-CVStackACC": "\MLC\SEP\MLQ",
         "NaivePACC": "\BC\SEP\BQ",
-        "StackPACC": "\MLC\SEP\BQ",
+        "CVStackPACC": "\MLC\SEP\BQ",
         "MRQ-PACC": "\BC\SEP\MLQ",
-        "MRQ-StackPACC": "\MLC\SEP\MLQ",
+        "MRQ-CVStackPACC": "\MLC\SEP\MLQ",
 
         #MLC
         'MLkNN-MLPCC': '1',
@@ -213,12 +213,13 @@ def save_table(table, path, filtered_models):
         #MLQ
         'RakelD-PCC': 'RkClust',
         'KMeansClustersPowerSet-PCC': 'kClust',
+        #'MRQ-PCC': 'BR Reg',
         'MRQ-Ridge': 'R1',
         'MRQ-MultitaskLasso': 'R2',
         'MRQ-RandomForest': 'R3',
         'MRQ-LinearSVR': 'R4',
         'MRQ-StackedLinearSVR': 'R5',
-        'MRQ-ChainedLinearSVR': 'R6'
+        'MRQ-ChainedLinearSVR': 'R6',
     }
 
     # tabular += table.latexTabularT(benchmark_replace=dataset_replace, method_replace=method_replace, side=True)
@@ -250,6 +251,10 @@ if __name__ == '__main__':
     relative_absolute_error = qp.error.rae
 
     datasets.remove("jrcall") #FIXME
+    # datasets.remove("ohsumed") #FIXME
+    # datasets.remove("rcv1") #FIXME
+    # datasets.remove("Corel5k") #FIXME
+    # datasets.remove("delicious") #FIXME
 
     #generate_table(f'{opt.tablepath}/npp.ae.tex', protocol='npp', error=absolute_error)
     # generate_table(f'{opt.tablepath}/app.ae.tex', protocol='app', error=absolute_error)
@@ -258,14 +263,14 @@ if __name__ == '__main__':
     
     if opt.subset == 'all' or opt.subset == 'general':
         models = model_subsets["general"]
-        generate_table(f'{opt.tablepath}/cc_nocol.app.ae.tex', protocol='app', error=absolute_error, include=["eCC", "kCC", "-CC", "-StackCC", "-MLCC"], color=False)
-        generate_table(f'{opt.tablepath}/cc_col.app.ae.tex', protocol='app', error=absolute_error, include=["eCC", "kCC", "-CC", "-StackCC", "-MLCC"], color=True)
-        generate_table(f'{opt.tablepath}/pcc_nocol.app.ae.tex', protocol='app', error=absolute_error, include=["ePCC", "kPCC", "-PCC", "-StackPCC", "-MLPCC"], color=False)
-        generate_table(f'{opt.tablepath}/pcc_col.app.ae.tex', protocol='app', error=absolute_error, include=["ePCC", "kPCC", "-PCC", "-StackPCC", "-MLPCC"], color=True)
-        generate_table(f'{opt.tablepath}/acc_nocol.app.ae.tex', protocol='app', error=absolute_error, include=["eACC", "kACC", "-ACC", "-StackACC", "-MLACC"], color=False)
-        generate_table(f'{opt.tablepath}/acc_col.app.ae.tex', protocol='app', error=absolute_error, include=["eACC", "kACC", "-ACC", "-StackACC", "-MLACC"], color=True)
-        generate_table(f'{opt.tablepath}/pacc_nocol.app.ae.tex', protocol='app', error=absolute_error, include=["ePACC", "kPACC", "-PACC", "-StackPACC", "-MLPACC"], color=False)
-        generate_table(f'{opt.tablepath}/pacc_col.app.ae.tex', protocol='app', error=absolute_error, include=["ePACC", "kPACC", "-PACC", "-StackPACC", "-MLPACC"], color=True)
+        generate_table(f'{opt.tablepath}/cc_nocol.app.ae.tex', protocol='app', error=absolute_error, include=["eCC", "kCC", "-CC", "-CVStackCC", "-MLCC"], color=False)
+        # generate_table(f'{opt.tablepath}/cc_col.app.ae.tex', protocol='app', error=absolute_error, include=["eCC", "kCC", "-CC", "-CVStackCC", "-MLCC"], color=True)
+        generate_table(f'{opt.tablepath}/pcc_nocol.app.ae.tex', protocol='app', error=absolute_error, include=["ePCC", "kPCC", "-PCC", "-CVStackPCC", "-MLPCC"], color=False)
+        # generate_table(f'{opt.tablepath}/pcc_col.app.ae.tex', protocol='app', error=absolute_error, include=["ePCC", "kPCC", "-PCC", "-CVStackPCC", "-MLPCC"], color=True)
+        generate_table(f'{opt.tablepath}/acc_nocol.app.ae.tex', protocol='app', error=absolute_error, include=["eACC", "kACC", "-ACC", "-CVStackACC", "-MLACC"], color=False)
+        # generate_table(f'{opt.tablepath}/acc_col.app.ae.tex', protocol='app', error=absolute_error, include=["eACC", "kACC", "-ACC", "-CVStackACC", "-MLACC"], color=True)
+        generate_table(f'{opt.tablepath}/pacc_nocol.app.ae.tex', protocol='app', error=absolute_error, include=["ePACC", "kPACC", "-PACC", "-CVStackPACC", "-MLPACC"], color=False)
+        # generate_table(f'{opt.tablepath}/pacc_col.app.ae.tex', protocol='app', error=absolute_error, include=["ePACC", "kPACC", "-PACC", "-CVStackPACC", "-MLPACC"], color=True)
     
     if opt.subset == 'all' or opt.subset == 'mlc':
         models = model_subsets["mlc"]
