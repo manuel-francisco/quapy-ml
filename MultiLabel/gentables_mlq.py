@@ -115,7 +115,7 @@ SKMULTILEARN_ALL_DATASETS = ['Corel5k', 'bibtex', 'birds', 'delicious', 'emotion
 SKMULTILEARN_NOBIG_DATASETS = ['birds', 'emotions', 'enron', 'genbase', 'mediamill', 'medical', 'scene', 'tmc2007_500', 'yeast']
 SKMULTILEARN_SMALL_DATASETS = ['birds', 'emotions', 'enron', 'genbase', 'medical', 'scene', 'tmc2007_500', 'yeast'] #offline
 ALLTABLE = SKMULTILEARN_ALL_DATASETS + TC_DATASETS
-datasets = ALLTABLE
+datasets = ["emotions", "scene", "yeast", "birds", "genbase", "medical", "tmc2007_500", "ohsumed", "enron", "reuters21578", "rcv1", "mediamill", "bibtex", "Corel5k", "delicious"]
 
 
 def generate_table(path, protocol, error, include, color=True, prec_mean=4):#, drift_bin):
@@ -181,9 +181,23 @@ def save_table(table, path, filtered_models):
             \\begin{tabularx}{\\textwidth}{@{}l""" + ('Y' * (len(list(itertools.product(filtered_models, range(3))))+1)) + """@{}} \\toprule
             """
     dataset_replace = {'tmc2007_500': 'tmc2007\_500', 'tmc2007_500-red': 'tmc2007\_500-red',
-    'tmc2007_5000': 'tmc2007\_5000',
+    'tmc2007_5000': 'Tmc2007\_5000',
     'tmc2007_5001': 'tmc2007\_5001',
-    'tmc2007_5002': 'tmc2007\_5002',}
+    'tmc2007_5002': 'tmc2007\_5002',
+    'emotions': 'Emotions',
+    'scene': 'Scene',
+    'yeast': 'Yeast',
+    'birds': 'Birds',
+    'genbase': 'Genbase',
+    'medical': 'Medical',
+    'ohsumed': 'Ohsumed',
+    'enron': 'Enron',
+    'reuters21578': 'Reuters-21578',
+    'rcv1': 'RCV1-v2',
+    'mediamill': 'Mediamill',
+    'bibtex': 'Bibtex',
+    'delicious': 'Delicious',
+    }
     method_replace = {
         "NaiveCC": "\BC\SEP\BQ",
         "CVStackCC": "\MLC\SEP\BQ",
@@ -249,12 +263,6 @@ if __name__ == '__main__':
     qp.environ["SAMPLE_SIZE"] = sample_size
     absolute_error = qp.error.ae
     relative_absolute_error = qp.error.rae
-
-    datasets.remove("jrcall") #FIXME
-    # datasets.remove("ohsumed") #FIXME
-    # datasets.remove("rcv1") #FIXME
-    # datasets.remove("Corel5k") #FIXME
-    # datasets.remove("delicious") #FIXME
 
     #generate_table(f'{opt.tablepath}/npp.ae.tex', protocol='npp', error=absolute_error)
     # generate_table(f'{opt.tablepath}/app.ae.tex', protocol='app', error=absolute_error)
