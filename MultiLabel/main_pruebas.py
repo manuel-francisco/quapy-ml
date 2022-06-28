@@ -608,8 +608,10 @@ if __name__ == '__main__':
     #     })
     #     continue
     
-    # df = pd.DataFrame.from_records(records).sort_values("dataset")
-
+    # df = pd.DataFrame.from_records(records).sort_values("n_labels")
+    # df.columns = ["Dataset", "#Train", "#Test", "#Classes", "Card", "Dens", "Div", "NormDiv", "PUniq", "PMax"]
+    # print(df[["Dataset", "#Classes", "#Train", "#Test", "Card", "Dens", "Div", "NormDiv", "PUniq", "PMax"]].to_latex(index=False, float_format="%.3f"))
+    # ...
 
 #          dataset  train_size  test_size  n_labels  cardinality   density  diversity  normdiversity     puniq      pmax
 # 0        Corel5k        4500        500       292     3.480000  0.011918       3113      10.660959  0.542889  0.012222

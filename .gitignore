@@ -134,9 +134,17 @@ dmypy.json
 
 #manolo
 results/*
+results*/*
+old_results/*
 tables/*
 nohup.out
 main.aux
 main.out
 main.log
 pickles_manuel/*
+*.tex
+*.pdf
+*.json
+*.html
+*.ipynb
+whoami.txt
