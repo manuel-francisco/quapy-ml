@@ -137,8 +137,8 @@ def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __mai
         #yield 'NaivePCC', MLNaiveAggregativeQuantifier(select_best(PCC(cls()), single=True))
         #yield 'NaiveACC', MLNaiveAggregativeQuantifier(select_best(ACC(cls()), single=True))
         #yield 'NaivePACC', MLNaiveAggregativeQuantifier(select_best(PACC(cls()), single=True))
-        yield 'NaiveHDy', MLNaiveAggregativeQuantifier(select_best(HDy(cls()), single=True))
-        # yield 'NaiveSLDNoCalibrado', MLNaiveAggregativeQuantifier(select_best(EMQ(cls()), single=True))
+        #yield 'NaiveHDy', MLNaiveAggregativeQuantifier(select_best(HDy(cls()), single=True))
+        yield 'NaiveSLDnc', MLNaiveAggregativeQuantifier(select_best(EMQ(cls()), single=True))
         #yield 'NaiveSLD', MLNaiveAggregativeQuantifier(select_best(EMQ(calibratedCls()), single=True))
 
         #yield 'StackCC', select_best(MLCC(MLStackedClassifier(cls())))
@@ -158,7 +158,7 @@ def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __mai
         #yield 'CVStackPACC', select_best(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)), param_grid=CVStack_grid)
         #yield 'CVStackHDy', select_best(MLACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)),
         #                                param_grid=CVStack_grid)
-        #yield 'CVStackSLD', select_best(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)),
+        #yield 'CVStackSLDnc', select_best(MLPACC(MLGeneralStackedClassifier(cls(), cv=5, norm=True, passthrough=True)),
         #                                 param_grid=CVStack_grid)
 
         common={'protocol':'app', 'sample_size':100, 'n_samples': 5000, 'norm': True, 'means':False, 'stds':False, 'regression':'svr'}
@@ -171,7 +171,7 @@ def models(subset, n_prevalences=101, repeats=25, n_jobs=-1): # CAMBIAR EN __mai
         #yield 'MRQ-ACC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(ACC(cls()), single=True)), **common), param_grid=MRQ_grid)
         #yield 'MRQ-PACC', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(PACC(cls()), single=True)), **common), param_grid=MRQ_grid)
         #yield 'MRQ-HDy', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(HDy(cls()), single=True)), **common), param_grid=MRQ_grid)
-        #yield 'MRQ-SLD', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(EMQ(calibratedCls()), single=True)), **common), param_grid=MRQ_grid)
+        yield 'MRQ-SLDnc', select_best(MLRegressionQuantification(MLNaiveQuantifier(select_best(EMQ(cls()), single=True)), **common), param_grid=MRQ_grid)
         # yield 'MRQ-StackCC', MLRegressionQuantification(select_best(MLCC(MLStackedClassifier(cls()))), **common)
         # yield 'MRQ-StackPCC', MLRegressionQuantification(select_best(MLPCC(MLStackedClassifier(cls()))), **common)
         # yield 'MRQ-StackACC', MLRegressionQuantification(select_best(MLACC(MLStackedClassifier(cls()))), **common)
