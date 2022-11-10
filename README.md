@@ -1,3 +1,9 @@
+# Disclaimer
+This is a modified version of QuaPy that is available for the reproducibility of the
+experiments of the paper *Multi-Label Quantification* (under submission).
+
+Please visit [click here](https://github.com/HLT-ISTI/QuaPy) for the official version.
+
 # QuaPy
 
 QuaPy is an open source framework for Quantification (a.k.a. Supervised Prevalence Estimation)
